@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useLatest } from "./shared";
 
 export type GuardEvent = "copy" | "screenshot" | "blur" | "fullscreenExit" | "print" | "devtools";
 
@@ -24,8 +25,7 @@ export function ExamGuard({ active, who, attemptId, onEvent, children }: { activ
   const [shield, setShield] = useState<null | "focus" | "shot">(null);
   const [toast, setToast] = useState<string | null>(null);
   const [fsOut, setFsOut] = useState(false);
-  const cb = useRef(onEvent);
-  cb.current = onEvent;
+  const cb = useLatest(onEvent);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -83,7 +83,9 @@ export function ExamGuard({ active, who, attemptId, onEvent, children }: { activ
     window.addEventListener("blur", onBlur);
     window.addEventListener("focus", onFocus);
     window.addEventListener("beforeprint", onPrint);
-    setFsOut(!document.fullscreenElement && !!document.documentElement.requestFullscreen);
+    // sync with the browser's fullscreen state once listeners are attached
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setFsOut(!document.fullscreenElement && typeof document.documentElement.requestFullscreen === "function");
     return () => {
       document.removeEventListener("copy", onCopy, true);
       document.removeEventListener("cut", onCopy, true);
@@ -98,7 +100,7 @@ export function ExamGuard({ active, who, attemptId, onEvent, children }: { activ
       window.removeEventListener("focus", onFocus);
       window.removeEventListener("beforeprint", onPrint);
     };
-  }, [active]);
+  }, [active, cb]);
 
   const watermark = useMemo(() => {
     const text = `${who} · ${attemptId}`.replace(/[<>&"]/g, "");

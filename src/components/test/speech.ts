@@ -62,7 +62,7 @@ export async function speakLines(lines: { voice: "f" | "m"; text: string }[], op
 }
 
 // ── Speech recognition ───────────────────────────────────────
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 export function getRecognitionCtor(): any {
   if (typeof window === "undefined") return null;
   return (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition || null;

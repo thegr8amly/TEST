@@ -77,6 +77,8 @@ export default function TestApp() {
   useEffect(() => {
     const saved = load();
     const { link, sid } = readLink();
+    // client-only state (localStorage / URL) is read after hydration on purpose
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (saved && saved.stage !== "register") setResume(saved);
     else setS(saved?.stage === "register" ? { ...saved, link: link ?? saved.link } : fresh(link, sid));
   }, []);
@@ -86,6 +88,7 @@ export default function TestApp() {
     if (!s) return;
     try {
       localStorage.setItem(KEY, JSON.stringify({ ...s, savedAt: Date.now() }));
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reflects the result of an external write
       setSaveError(false);
     } catch {
       setSaveError(true);
@@ -151,11 +154,13 @@ export default function TestApp() {
   }, [router]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- starts the network submission for this stage
     if (s?.stage === "submitting") submit(s);
   }, [s?.stage, submit]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // auto-retry when the connection comes back
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- auto-retry when the connection returns
     if (online && submitError && s?.stage === "submitting") submit(s);
   }, [online]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -186,7 +191,7 @@ export default function TestApp() {
   const blockInc = (k: "reading" | "listening") => () => update((p) => ({ ...p, blocks: { reading: p.blocks?.reading ?? 0, listening: p.blocks?.listening ?? 0, [k]: (p.blocks?.[k] ?? 0) + 1 } }));
 
   return (
-    <Shell phase={phase} name={s.candidate?.fullName} timer={timer} focus={guarded} online={online} savedAt={s.stage !== "register" ? Date.now() : undefined} saveError={saveError}>
+    <Shell phase={phase} name={s.candidate?.fullName} timer={timer} focus={guarded} online={online} saved={s.stage !== "register"} saveError={saveError}>
       <ExamGuard active={guarded} who={`${s.candidate?.fullName ?? ""} · ${s.candidate?.email ?? ""}`} attemptId={s.attemptId} onEvent={onGuard}>
         <div key={s.stage} className="motion-safe:animate-rise">
           {s.stage === "register" && <Register initial={s.candidate} link={s.link} onSubmit={(c) => go("instructions", { candidate: c, startedAt: new Date().toISOString() })} />}
@@ -232,14 +237,14 @@ export default function TestApp() {
   );
 }
 
-function Shell({ children, phase = -1, name, timer, focus = false, online, savedAt, saveError }: {
+function Shell({ children, phase = -1, name, timer, focus = false, online, saved, saveError }: {
   children: React.ReactNode;
   phase?: number;
   name?: string;
   timer?: { deadline: number; totalMs: number; label: string };
   focus?: boolean;
   online: boolean;
-  savedAt?: number;
+  saved?: boolean;
   saveError?: boolean;
 }) {
   return (
@@ -261,7 +266,7 @@ function Shell({ children, phase = -1, name, timer, focus = false, online, saved
             </nav>
           )}
           <div className="flex items-center gap-3">
-            {savedAt && (
+            {saved && (
               <span className={`hidden items-center gap-1.5 whitespace-nowrap text-xs sm:flex ${saveError ? "text-[#9b1c26]" : "text-slate-600"}`} role="status">
                 <span aria-hidden className={`h-2 w-2 rounded-full ${saveError ? "bg-sdg-red" : "bg-sdg-green"}`} />
                 {saveError ? "No se pudo guardar" : "Progreso guardado"}

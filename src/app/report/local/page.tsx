@@ -9,6 +9,7 @@ export default function Page() {
   useEffect(() => {
     try {
       const raw = localStorage.getItem("inter-ipt-last-result");
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage is only available after hydration
       setRec(raw ? JSON.parse(raw) : null);
     } catch {
       setRec(null);

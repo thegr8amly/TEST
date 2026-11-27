@@ -148,7 +148,8 @@ export function Requirements({ onNext, onBack }: { onNext: () => void; onBack: (
     ]);
     setRunning(false);
   };
-  useEffect(() => { run(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- run the checks once on mount
+  useEffect(() => { run(); }, []);
 
   const blocking = checks.some((c) => c.required && !c.ok);
   return (

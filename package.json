@@ -2,13 +2,17 @@
   "name": "inter-placement-test",
   "version": "1.0.0",
   "private": true,
-  "description": "INTER Placement Test — CEFR-aligned 4-skill diagnostic (baseline for ELR)",
+  "description": "INTER Placement Test \u2014 CEFR-aligned 4-skill diagnostic (baseline for ELR)",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "simulate": "npx -y tsx scripts/simulate.ts"
+    "simulate": "tsx scripts/simulate.ts",
+    "lint": "eslint src",
+    "test": "tsx --conditions=react-server --test tests/unit/*.test.ts",
+    "test:e2e": "node tests/e2e/candidate-flow.cjs",
+    "check": "npm run lint && npm run typecheck && npm test && npm run build"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.14.0",
@@ -24,7 +28,11 @@
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "axe-core": "^4.14.1",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^16.4.6",
     "tailwindcss": "^4.3.5",
+    "tsx": "^4.23.15",
     "typescript": "^5.6.0"
   }
 }

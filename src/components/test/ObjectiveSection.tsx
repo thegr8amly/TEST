@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { PublicTestlet } from "@/lib/bank/types";
 import { speakLines, ttsAvailable } from "./speech";
-import { Button, Card, fetchJSON, Notice, useCountdown, type AnswerRec } from "./shared";
+import { Button, Card, fetchJSON, Notice, useCountdown, useLatest, type AnswerRec } from "./shared";
 
 const LETTERS = ["A", "B", "C", "D", "E"];
 /** Academic rule (v1.0): maximum number of plays per listening testlet. */
@@ -106,11 +106,9 @@ export function ObjectiveSection({
   const [loading, setLoading] = useState(true);
   const [retrying, setRetrying] = useState(0);
   const [error, setError] = useState<string | null>(null);
-  const shownAt = useRef(Date.now());
-  const answersRef = useRef(answers);
-  answersRef.current = answers;
-  const doneRef = useRef(onDone);
-  doneRef.current = onDone;
+  const shownAt = useRef(0);
+  const answersRef = useLatest(answers);
+  const doneRef = useLatest(onDone);
   const headingRef = useRef<HTMLHeadingElement>(null);
 
   const fetchNext = useCallback(async (list: AnswerRec[]) => {
@@ -132,9 +130,9 @@ export function ObjectiveSection({
     } finally {
       setLoading(false);
     }
-  }, [skill, attemptId]);
+  }, [skill, attemptId, doneRef]);
 
-  useEffect(() => { fetchNext(answersRef.current); }, [fetchNext]);
+  useEffect(() => { fetchNext(answersRef.current); }, [fetchNext, answersRef]);
 
   const commit = (timeout = false) => {
     if (!testlet) { if (timeout) doneRef.current(true); return; }

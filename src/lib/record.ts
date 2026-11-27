@@ -129,7 +129,7 @@ export type PublicRecord = Pick<BaselineRecord, "schema" | "id" | "test" | "comp
 export function toPublicRecord(rec: BaselineRecord): PublicRecord {
   const skills = Object.fromEntries(
     (Object.entries(rec.skills) as [SkillKey, SkillResult][]).map(([k, v]) => {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+       
       const { model, correct, total, ...rest } = v;
       return [k, rest];
     }),

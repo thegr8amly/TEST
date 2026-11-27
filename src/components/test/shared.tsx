@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 export type Stage =
   | "register"
@@ -95,11 +95,17 @@ export function useOnline() {
   return online;
 }
 
+/** Keeps a ref pointing at the latest value without writing refs during render. */
+export function useLatest<T>(value: T) {
+  const ref = useRef(value);
+  useLayoutEffect(() => { ref.current = value; });
+  return ref;
+}
+
 export function useCountdown(deadline: number | undefined, onExpire?: () => void) {
   const [now, setNow] = useState(() => Date.now());
   const fired = useRef(false);
-  const cb = useRef(onExpire);
-  cb.current = onExpire;
+  const cb = useLatest(onExpire);
   useEffect(() => {
     fired.current = false;
     const id = setInterval(() => setNow(Date.now()), 500);
@@ -111,7 +117,7 @@ export function useCountdown(deadline: number | undefined, onExpire?: () => void
       fired.current = true;
       cb.current?.();
     }
-  }, [left, deadline]);
+  }, [left, deadline, cb]);
   return left;
 }
 

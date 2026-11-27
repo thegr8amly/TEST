@@ -88,6 +88,7 @@ export function SpeakingSection({ attemptId, done, onTask, onDone }: { attemptId
       recRef.current = mr;
     } catch { recRef.current = null; }
     asrRef.current = startRecognizer();
+    // eslint-disable-next-line react-hooks/purity -- runs in an event/timer callback, not during render
     startedAt.current = Date.now();
     setPhase("record");
     // waveform

@@ -52,7 +52,16 @@ function SkillRow({ en, k, s }: { en: string; k: SkillKey; s: PublicRecord["skil
         <div className="font-display text-sm font-bold text-navy">{en}</div>
         <div className="text-xs text-slate-600">{SKILL_LABEL_ES[k]}</div>
       </div>
-      <div className="relative" onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)} onFocus={() => setHover(true)} onBlur={() => setHover(false)} tabIndex={s.score !== null ? 0 : -1} aria-label={s.score !== null ? `${en}: ${s.score} de 100, nivel ${s.cefr}${sem ? `, margen ±${Math.round(sem)}` : ""}, ${st.t}` : `${en}: pendiente de revisión docente`}>
+      <div
+        className="relative rounded-full focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-royal"
+        onMouseEnter={() => setHover(true)}
+        onMouseLeave={() => setHover(false)}
+        onFocus={() => setHover(true)}
+        onBlur={() => setHover(false)}
+        {...(s.score !== null
+          ? { role: "meter", tabIndex: 0, "aria-valuemin": 0, "aria-valuemax": 100, "aria-valuenow": s.score, "aria-label": en, "aria-valuetext": `${s.score} de 100, nivel ${s.cefr}${sem ? `, margen ±${Math.round(sem)}` : ""}, ${st.t}` }
+          : { role: "img", "aria-label": `${en}: pendiente de revisión docente` })}
+      >
         <BandTrack>
           {s.score !== null && (
             <>

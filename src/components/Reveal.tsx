@@ -20,7 +20,7 @@ export function Reveal({ children, delay = 0, className = "", as: Tag = "div" }:
     return () => io.disconnect();
   }, []);
   return (
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     <Tag ref={ref as any} className={`reveal ${className}`} style={{ transitionDelay: `${delay}ms` }}>
       {children}
     </Tag>
