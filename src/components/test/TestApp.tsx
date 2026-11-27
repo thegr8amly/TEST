@@ -7,6 +7,8 @@ import { SpeakingSection } from "./SpeakingSection";
 import { Register, SectionIntro, Submitting, SystemCheck } from "./Steps";
 import { WritingSection } from "./WritingSection";
 import { asrAvailable } from "./speech";
+import { enterFullscreen, ExamGuard, type GuardEvent } from "./ExamGuard";
+import { HeaderTimer } from "./HeaderTimer";
 import { newAttemptId, SECTION_MINUTES, type Stage, type TestState } from "./shared";
 
 const KEY = "inter-ipt-state-v1";
@@ -24,7 +26,7 @@ function fresh(): TestState {
     writing: {},
     speaking: [],
     deadlines: {},
-    integrity: { tabSwitches: 0, pasteAttempts: 0 },
+    integrity: { tabSwitches: 0, pasteAttempts: 0, copyAttempts: 0, screenshotAttempts: 0, focusLosses: 0, fullscreenExits: 0, printAttempts: 0, devtoolsAttempts: 0 },
     plays: {},
   };
 }
@@ -83,9 +85,16 @@ export default function TestApp() {
     return () => window.removeEventListener("beforeunload", h);
   }, [s]);
 
+  const onGuard = useCallback((e: GuardEvent) => {
+    const key = ({ copy: "copyAttempts", screenshot: "screenshotAttempts", blur: "focusLosses", fullscreenExit: "fullscreenExits", print: "printAttempts", devtools: "devtoolsAttempts" } as const)[e];
+    update((p) => ({ ...p, integrity: { ...p.integrity, [key]: (p.integrity[key] ?? 0) + 1 } }));
+  }, [update]);
+
   const go = (stage: Stage, extra?: Partial<TestState>) => update((p) => ({ ...p, ...extra, stage }));
-  const startTimed = (sec: "reading" | "listening" | "writing") =>
+  const startTimed = (sec: "reading" | "listening" | "writing") => {
+    enterFullscreen();
     update((p) => ({ ...p, stage: sec, deadlines: { ...p.deadlines, [sec]: p.deadlines[sec] ?? Date.now() + SECTION_MINUTES[sec] * 60_000 } }));
+  };
 
   const submit = useCallback(async (state: TestState) => {
     if (submitting.current) return;
@@ -100,12 +109,13 @@ export default function TestApp() {
         listening: state.listening,
         writing: Object.entries(state.writing).map(([taskId, text]) => ({ taskId, text })),
         speaking: state.speaking,
-        integrity: { ...state.integrity, userAgent: navigator.userAgent.slice(0, 400), speechRecognition: asrAvailable() },
+        integrity: { copyAttempts: 0, screenshotAttempts: 0, focusLosses: 0, fullscreenExits: 0, printAttempts: 0, devtoolsAttempts: 0, ...state.integrity, userAgent: navigator.userAgent.slice(0, 400), speechRecognition: asrAvailable() },
       };
       const r = await fetch("/api/results", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
       if (!r.ok) throw new Error(`Error ${r.status}.`);
       const rec = await r.json();
       try { localStorage.setItem(LAST_RESULT_KEY, JSON.stringify(rec)); localStorage.removeItem(KEY); } catch { /* ignore */ }
+      try { if (document.fullscreenElement) await document.exitFullscreen(); } catch { /* ignore */ }
       router.replace(rec.persisted ? `/report/${rec.id}` : "/report/local");
     } catch (e) {
       setSubmitError(e instanceof Error ? e.message : "Error de red.");
@@ -134,10 +144,15 @@ export default function TestApp() {
   if (!s) return <Shell><div /></Shell>;
 
   const current = STEPS.findIndex((x) => x.stage.includes(s.stage));
+  const timedKey = s.stage === "reading" || s.stage === "listening" || s.stage === "writing" ? s.stage : null;
+  const timer = timedKey && s.deadlines[timedKey] ? { deadline: s.deadlines[timedKey]!, totalMs: SECTION_MINUTES[timedKey] * 60_000, label: timedKey[0].toUpperCase() + timedKey.slice(1) } : undefined;
+  const guarded = ["reading", "listening", "writing", "speaking"].includes(s.stage);
   return (
-    <Shell steps={current >= 0 ? { current, labels: STEPS.map((x) => x.label) } : undefined} name={s.candidate?.fullName}>
+    <Shell steps={current >= 0 ? { current, labels: STEPS.map((x) => x.label) } : undefined} name={s.candidate?.fullName} timer={timer}>
+     <ExamGuard active={guarded} who={`${s.candidate?.fullName ?? ""} · ${s.candidate?.email ?? ""}`} attemptId={s.attemptId} onEvent={onGuard}>
+     <div key={s.stage} className="animate-rise">
       {s.stage === "register" && <Register initial={s.candidate} onSubmit={(c) => go("check", { candidate: c, startedAt: new Date().toISOString() })} />}
-      {s.stage === "check" && <SystemCheck onReady={() => go("intro-reading")} />}
+      {s.stage === "check" && <SystemCheck onReady={() => { enterFullscreen(); go("intro-reading"); }} />}
 
       {s.stage === "intro-reading" && <SectionIntro skill="reading" onStart={() => startTimed("reading")} />}
       {s.stage === "reading" && (
@@ -179,7 +194,7 @@ export default function TestApp() {
         />
       )}
 
-      {s.stage === "intro-speaking" && <SectionIntro skill="speaking" onStart={() => go("speaking")} />}
+      {s.stage === "intro-speaking" && <SectionIntro skill="speaking" onStart={() => { enterFullscreen(); go("speaking"); }} />}
       {s.stage === "speaking" && (
         <SpeakingSection
           attemptId={s.attemptId}
@@ -190,16 +205,18 @@ export default function TestApp() {
       )}
 
       {s.stage === "submitting" && <Submitting error={submitError} onRetry={() => submit(s)} />}
+     </div>
+     </ExamGuard>
     </Shell>
   );
 }
 
-function Shell({ children, steps, name }: { children: React.ReactNode; steps?: { current: number; labels: string[] }; name?: string }) {
+function Shell({ children, steps, name, timer }: { children: React.ReactNode; steps?: { current: number; labels: string[] }; name?: string; timer?: { deadline: number; totalMs: number; label: string } }) {
   return (
     <div className="min-h-dvh bg-mist">
       <div className="pointer-events-none fixed inset-x-0 top-0 -z-0 h-72 bg-gradient-to-b from-navy/[0.07] to-transparent" />
       <header className="sticky top-0 z-30 border-b border-line/70 bg-white/80 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-8">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-2 sm:px-8">
           <BrandLockup />
           {steps && (
             <ol className="hidden items-center gap-1 md:flex">
@@ -211,11 +228,15 @@ function Shell({ children, steps, name }: { children: React.ReactNode; steps?: {
               ))}
             </ol>
           )}
-          <div className="hidden text-right text-xs text-slate-500 sm:block">{name && <><div className="font-semibold text-navy">{name}</div>INTER Placement Test</>}</div>
+          {timer ? (
+            <HeaderTimer key={timer.label} deadline={timer.deadline} totalMs={timer.totalMs} label={timer.label} />
+          ) : (
+            <div className="hidden text-right text-xs text-slate-500 sm:block">{name && <><div className="font-semibold text-navy">{name}</div>INTER Placement Test</>}</div>
+          )}
         </div>
         <div className="sdg-bar h-[3px] w-full opacity-80" />
       </header>
-      <main className="relative px-4 py-10 sm:px-8 sm:py-14">{children}</main>
+      <main className="relative px-4 py-6 sm:px-8 sm:py-8">{children}</main>
     </div>
   );
 }

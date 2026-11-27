@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { PublicTestlet } from "@/lib/bank/types";
 import { speakLines, ttsAvailable } from "./speech";
-import { Card, PrimaryButton, Timer, useCountdown, type AnswerRec } from "./shared";
+import { Card, PrimaryButton, useCountdown, type AnswerRec } from "./shared";
 
 const LETTERS = ["A", "B", "C", "D", "E"];
 
@@ -152,7 +152,6 @@ export function ObjectiveSection({
             <span className="ml-2 text-xs text-slate-500">Bloque {Math.min(index + 1, total)} de {total}</span>
           </div>
         </div>
-        <Timer ms={left} total={totalMs} />
       </div>
 
       {error && (
@@ -187,7 +186,8 @@ export function ObjectiveSection({
 
           <div className="space-y-4">
             {testlet.questions.map((q, qi) => (
-              <Card key={q.id} className="!p-5 sm:!p-6">
+              <div key={q.id} className="animate-rise" style={{ animationDelay: `${120 + qi * 110}ms` }}>
+              <Card className="!p-5 transition-shadow duration-300 hover:shadow-2xl sm:!p-6">
                 <div className="flex gap-3">
                   <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-navy font-display text-xs font-bold text-gold">{qi + 1}</span>
                   <p className="font-medium text-navy">{q.prompt}</p>
@@ -199,15 +199,16 @@ export function ObjectiveSection({
                       <button
                         key={oi}
                         onClick={() => setChoices((c) => ({ ...c, [q.id]: oi }))}
-                        className={`group flex items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm transition ${on ? "bg-navy text-white shadow-lg shadow-navy/20" : "bg-mist text-slate-700 ring-1 ring-line hover:bg-white hover:ring-navy/30"}`}
+                        className={`group flex items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm transition-all duration-200 active:scale-[0.98] ${on ? "bg-navy text-white shadow-lg shadow-navy/20" : "bg-mist text-slate-700 ring-1 ring-line hover:translate-x-1 hover:bg-white hover:ring-navy/30"}`}
                       >
-                        <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${on ? "bg-gold text-navy-950" : "bg-white text-slate-500 ring-1 ring-line group-hover:text-navy"}`}>{LETTERS[oi]}</span>
+                        <span key={on ? "on" : "off"} className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${on ? "animate-pop bg-gold text-navy-950" : "bg-white text-slate-500 ring-1 ring-line group-hover:text-navy"}`}>{on ? "✓" : LETTERS[oi]}</span>
                         {o}
                       </button>
                     );
                   })}
                 </div>
               </Card>
+              </div>
             ))}
             <div className="flex items-center justify-between gap-4 pt-2">
               <p className="text-xs text-slate-500">{listening && played === 0 ? "Reproduce el audio antes de responder." : complete ? "Listo. No podrás volver a este bloque." : "Responde todas las preguntas para continuar."}</p>

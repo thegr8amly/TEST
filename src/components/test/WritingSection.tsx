@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { WRITING_TASKS } from "@/lib/bank/productive";
-import { Card, PrimaryButton, Timer, useCountdown } from "./shared";
+import { Card, PrimaryButton, useCountdown } from "./shared";
 
 const count = (t: string) => (t.match(/\S+/g) ?? []).length;
 
@@ -39,7 +39,6 @@ export function WritingSection({ values, deadline, totalMs, onChange, onPaste, o
             })}
           </div>
         </div>
-        <Timer ms={left} total={totalMs} />
       </div>
 
       <div key={task.id} className="grid animate-rise gap-6 lg:grid-cols-[0.8fr_1.2fr]">

@@ -42,7 +42,7 @@ export interface Placement {
   reviewRequired: boolean;
 }
 
-export function recommendPlacement(skills: Partial<Record<SkillKey, number | null>>, opts: { pendingSkills: SkillKey[]; provisionalSkills: SkillKey[]; tabSwitches: number }): Placement {
+export function recommendPlacement(skills: Partial<Record<SkillKey, number | null>>, opts: { pendingSkills: SkillKey[]; provisionalSkills: SkillKey[]; integrity: { tabSwitches: number; pasteAttempts?: number; copyAttempts?: number; screenshotAttempts?: number; focusLosses?: number; fullscreenExits?: number; printAttempts?: number; devtoolsAttempts?: number } }): Placement {
   const entries = (Object.entries(skills) as [SkillKey, number | null][]).filter(([, v]) => typeof v === "number") as [SkillKey, number][];
   const overall = entries.length ? entries.reduce((a, [, v]) => a + v, 0) / entries.length : 0;
   const index = Math.round(overall);
@@ -57,7 +57,12 @@ export function recommendPlacement(skills: Partial<Record<SkillKey, number | nul
   }
   for (const k of opts.pendingSkills) alerts.push({ code: "PENDING_REVIEW", severity: "critical", message: `${SKILL_LABEL_ES[k]}: pendiente de evaluación docente; no incluida en el promedio.` });
   for (const k of opts.provisionalSkills) alerts.push({ code: "PROVISIONAL", severity: "info", message: `${SKILL_LABEL_ES[k]}: puntuación provisional, se recomienda revisión docente.` });
-  if (opts.tabSwitches >= 3) alerts.push({ code: "INTEGRITY", severity: "warning", message: `El candidato salió de la pestaña del examen ${opts.tabSwitches} veces.` });
+  const ig = opts.integrity;
+  if (ig.tabSwitches >= 3) alerts.push({ code: "INTEGRITY_TABS", severity: "warning", message: `El candidato salió de la pestaña del examen ${ig.tabSwitches} veces.` });
+  if ((ig.screenshotAttempts ?? 0) > 0) alerts.push({ code: "INTEGRITY_SCREENSHOT", severity: "warning", message: `Se detectaron ${ig.screenshotAttempts} intento(s) de captura de pantalla.` });
+  if ((ig.copyAttempts ?? 0) + (ig.pasteAttempts ?? 0) >= 3) alerts.push({ code: "INTEGRITY_COPY", severity: "warning", message: `Intentos de copiar/pegar: ${(ig.copyAttempts ?? 0) + (ig.pasteAttempts ?? 0)}.` });
+  if ((ig.devtoolsAttempts ?? 0) > 0 || (ig.printAttempts ?? 0) > 0) alerts.push({ code: "INTEGRITY_TOOLS", severity: "warning", message: "Intentó abrir herramientas de desarrollador o imprimir la página." });
+  if ((ig.focusLosses ?? 0) >= 5 || (ig.fullscreenExits ?? 0) >= 3) alerts.push({ code: "INTEGRITY_FOCUS", severity: "info", message: `Salidas de la ventana: ${ig.focusLosses ?? 0} · salidas de pantalla completa: ${ig.fullscreenExits ?? 0}.` });
 
   const within = index - module.minIndex;
   const rationale =

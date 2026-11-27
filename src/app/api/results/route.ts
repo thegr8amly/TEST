@@ -28,7 +28,18 @@ const Body = z.object({
   listening: z.array(Answer).max(60),
   writing: z.array(z.object({ taskId: z.enum(["W1", "W2"]), text: str(6000) })).max(2),
   speaking: z.array(z.object({ taskId: z.enum(["S1", "S2", "S3"]), transcript: str(8000), durationSec: z.number().min(0).max(600), asrConfidence: z.number().min(0).max(1).nullable(), audioPath: str(200).optional() })).max(3),
-  integrity: z.object({ tabSwitches: z.number().int().min(0).max(999), pasteAttempts: z.number().int().min(0).max(999), userAgent: str(400), speechRecognition: z.boolean() }),
+  integrity: z.object({
+    tabSwitches: z.number().int().min(0).max(9999),
+    pasteAttempts: z.number().int().min(0).max(9999),
+    copyAttempts: z.number().int().min(0).max(9999).default(0),
+    screenshotAttempts: z.number().int().min(0).max(9999).default(0),
+    focusLosses: z.number().int().min(0).max(9999).default(0),
+    fullscreenExits: z.number().int().min(0).max(9999).default(0),
+    printAttempts: z.number().int().min(0).max(9999).default(0),
+    devtoolsAttempts: z.number().int().min(0).max(9999).default(0),
+    userAgent: str(400),
+    speechRecognition: z.boolean(),
+  }),
 });
 
 export async function POST(req: Request) {
@@ -64,7 +75,7 @@ export async function POST(req: Request) {
   const placement = recommendPlacement(scores, {
     pendingSkills: keys.filter((k) => skills[k].score === null),
     provisionalSkills: keys.filter((k) => skills[k].status === "provisional"),
-    tabSwitches: b.integrity.tabSwitches,
+    integrity: b.integrity,
   });
   const counted = keys.filter((k) => skills[k].score !== null);
   const completedAt = new Date();
