@@ -1,10 +1,10 @@
 import Image from "next/image";
 
 const BADGES = [
-  { en: "Reading", es: "Lectura", grad: "from-sdg-blue to-navy-600", icon: "M4 5a2 2 0 012-2h9l5 5v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5z M14 3v5h5 M8 13h8 M8 17h5", angle: -60 },
-  { en: "Listening", es: "Audio", grad: "from-sdg-teal to-sdg-blue", icon: "M3 14v-2a9 9 0 0118 0v2 M3 14a2 2 0 012-2h1v7H5a2 2 0 01-2-2v-3z M21 14a2 2 0 00-2-2h-1v7h1a2 2 0 002-2v-3z", angle: 30 },
-  { en: "Writing", es: "Escritura", grad: "from-gold to-sdg-orange", icon: "M12 20h9 M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z", angle: 120 },
-  { en: "Speaking", es: "Oral", grad: "from-sdg-magenta to-sdg-red", icon: "M12 2a3 3 0 00-3 3v7a3 3 0 006 0V5a3 3 0 00-3-3z M19 10v2a7 7 0 01-14 0v-2 M12 19v3", angle: 210 },
+  { en: "Reading", es: "Lectura", grad: "from-sdg-blue to-navy-600", icon: "M4 5a2 2 0 012-2h9l5 5v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5z M14 3v5h5 M8 13h8 M8 17h5", angle: 180 },
+  { en: "Listening", es: "Audio", grad: "from-sdg-teal to-sdg-blue", icon: "M3 14v-2a9 9 0 0118 0v2 M3 14a2 2 0 012-2h1v7H5a2 2 0 01-2-2v-3z M21 14a2 2 0 00-2-2h-1v7h1a2 2 0 002-2v-3z", angle: -90 },
+  { en: "Writing", es: "Escritura", grad: "from-gold to-sdg-orange", icon: "M12 20h9 M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z", angle: 0 },
+  { en: "Speaking", es: "Oral", grad: "from-sdg-magenta to-sdg-red", icon: "M12 2a3 3 0 00-3 3v7a3 3 0 006 0V5a3 3 0 00-3-3z M19 10v2a7 7 0 01-14 0v-2 M12 19v3", angle: 90 },
 ];
 
 /** Spinning INTER emblem with the four skills orbiting around it (no fake data). */
@@ -31,13 +31,13 @@ export function HeroOrbit() {
           return (
             <div key={b.en} className="absolute -translate-x-1/2 -translate-y-1/2" style={{ left: `${left}%`, top: `${top}%` }}>
               <div className="animate-orbit-rev">
-                <div className="glass-dark flex items-center gap-2.5 rounded-2xl py-2 pl-2 pr-4 shadow-2xl shadow-black/30 transition hover:scale-105">
+                <div className="flex items-center gap-2.5 rounded-2xl bg-navy/70 py-2 pl-2 pr-4 shadow-2xl shadow-black/40 ring-1 ring-white/15 backdrop-blur-xl transition hover:scale-105">
                   <span className={`flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br ${b.grad} text-white shadow-lg`}>
                     <svg className="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d={b.icon} /></svg>
                   </span>
                   <span className="leading-tight">
-                    <span className="block font-display text-[13px] font-bold text-white">{b.en}</span>
-                    <span className="block text-[10px] text-white/50">{b.es}</span>
+                    <span className="block font-display text-sm font-bold text-white">{b.en}</span>
+                    <span className="block text-[11px] text-white/60">{b.es}</span>
                   </span>
                 </div>
               </div>
