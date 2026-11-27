@@ -4,8 +4,10 @@ import { gradeSection } from "@/lib/adaptive";
 import { scoreSpeaking, scoreWriting } from "@/lib/ai-scoring";
 import { scoreToCefr } from "@/lib/cefr";
 import { recommendPlacement, type SkillKey } from "@/lib/placement";
-import { newId, type BaselineRecord, type SkillResult } from "@/lib/record";
-import { dispatchWebhook, saveResult } from "@/lib/storage";
+import { ASSESSMENT_ID, ASSESSMENT_VERSION, candidateId, cohortId, organizationId, period } from "@/lib/ids";
+import { toPublicRecord, type BaselineRecord, type SkillResult } from "@/lib/record";
+import { dispatchWebhook, getResult, saveResult } from "@/lib/storage";
+import { scoringVersions } from "@/lib/versioning";
 import { THETA_SLOPE } from "@/lib/cefr";
 
 export const maxDuration = 300;
@@ -13,7 +15,9 @@ export const maxDuration = 300;
 const Answer = z.object({ testletId: z.string().max(40), questionId: z.string().max(40), choice: z.number().int().min(0).max(5).nullable(), ms: z.number().optional() });
 const str = (n: number) => z.string().trim().max(n);
 const Body = z.object({
-  attemptId: z.string().regex(/^ipt_[a-z0-9]{6,20}$/).optional(),
+  attemptId: z.string().regex(/^ipt_[a-z0-9]{6,20}$/),
+  /** organisation / cohort slugs from an institutional invitation link (/test?org=…&cohort=…) */
+  link: z.object({ org: z.string().regex(/^[a-z0-9-]{1,48}$/).optional(), cohort: z.string().regex(/^[a-z0-9-]{1,48}$/).optional() }).optional(),
   startedAt: z.string().max(40),
   candidate: z.object({
     fullName: str(120).min(2),
@@ -37,6 +41,7 @@ const Body = z.object({
     fullscreenExits: z.number().int().min(0).max(9999).default(0),
     printAttempts: z.number().int().min(0).max(9999).default(0),
     devtoolsAttempts: z.number().int().min(0).max(9999).default(0),
+    sessionResumes: z.number().int().min(0).max(9999).default(0),
     userAgent: str(400),
     speechRecognition: z.boolean(),
   }),
@@ -46,6 +51,10 @@ export async function POST(req: Request) {
   const parsed = Body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "invalid_body", issues: parsed.error.issues.slice(0, 5) }, { status: 400 });
   const b = parsed.data;
+
+  // Idempotent: a retried submission returns the stored result instead of re-scoring.
+  const existing = await getResult(b.attemptId).catch(() => null);
+  if (existing) return NextResponse.json(toPublicRecord({ ...existing, persisted: true }));
 
   const reading = gradeSection("reading", b.reading);
   const listening = gradeSection("listening", b.listening);
@@ -83,8 +92,19 @@ export async function POST(req: Request) {
 
   const rec: BaselineRecord = {
     schema: "inter.placement.v1",
-    id: b.attemptId ?? newId(),
-    test: { name: "INTER Placement Test", version: "1.0.0", form: "adaptive-A" },
+    id: b.attemptId,
+    ids: {
+      candidateId: candidateId(b.candidate.email),
+      studentId: b.candidate.studentId || undefined,
+      organizationId: b.link?.org ? `org_${b.link.org}` : organizationId(b.candidate.organization),
+      cohortId: b.link?.cohort ? `coh_${b.link.cohort}` : cohortId(b.candidate.cohort),
+      assessmentId: ASSESSMENT_ID,
+      assessmentVersion: ASSESSMENT_VERSION,
+      attemptId: b.attemptId,
+    },
+    scoring: { ...scoringVersions(), aiModel: writing.model ?? speaking.model },
+    period: period(completedAt.toISOString()),
+    test: { name: "INTER Placement Test", version: ASSESSMENT_VERSION, form: "adaptive-A" },
     startedAt: isNaN(started.getTime()) ? completedAt.toISOString() : started.toISOString(),
     completedAt: completedAt.toISOString(),
     durationSec: isNaN(started.getTime()) ? 0 : Math.max(0, Math.round((completedAt.getTime() - started.getTime()) / 1000)),
@@ -122,5 +142,6 @@ export async function POST(req: Request) {
   }
   rec.persisted = persisted;
   after(() => dispatchWebhook(rec));
-  return NextResponse.json(rec);
+  // Never return item-level responses: they would reveal the answer keys.
+  return NextResponse.json(toPublicRecord(rec));
 }

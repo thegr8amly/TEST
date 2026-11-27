@@ -78,6 +78,9 @@ Rules:
 ${SCALE}
 Write all comments, strengths and improvements in clear, professional Spanish, addressed to the academic team.`;
 
+/** Exposed for version fingerprinting (see lib/versioning.ts). */
+export const RUBRIC_TEXT = { WRITING_RUBRIC, SPEAKING_RUBRIC };
+
 export interface WritingInput {
   taskId: string;
   text: string;

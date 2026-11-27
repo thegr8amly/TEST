@@ -72,7 +72,3 @@ export async function dispatchWebhook(rec: BaselineRecord) {
   }
 }
 
-export function isAdmin(key: string | null | undefined) {
-  const k = process.env.ADMIN_KEY;
-  return Boolean(k && key && key === k);
-}
