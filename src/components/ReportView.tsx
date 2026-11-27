@@ -222,10 +222,16 @@ function AdminDetail({ rec, adminKey }: { rec: BaselineRecord; adminKey?: string
   return (
     <section className="print-break mt-6 space-y-6 rounded-3xl bg-white p-6 ring-1 ring-line sm:p-8">
       <h2 className="font-display text-lg font-extrabold text-navy">Evidencias (solo administración)</h2>
-      <div className="grid gap-3 text-xs text-slate-600 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 text-xs text-slate-600 sm:grid-cols-5">
         <Stat l="Duración" v={`${Math.round(rec.durationSec / 60)} min`} />
         <Stat l="Cambios de pestaña" v={rec.integrity.tabSwitches} />
-        <Stat l="Intentos de pegar" v={rec.integrity.pasteAttempts} />
+        <Stat l="Salidas de ventana" v={rec.integrity.focusLosses ?? 0} />
+        <Stat l="Salidas pantalla compl." v={rec.integrity.fullscreenExits ?? 0} />
+        <Stat l="Capturas bloqueadas" v={rec.integrity.screenshotAttempts ?? 0} />
+        <Stat l="Copiar bloqueado" v={rec.integrity.copyAttempts ?? 0} />
+        <Stat l="Pegar bloqueado" v={rec.integrity.pasteAttempts} />
+        <Stat l="Imprimir" v={rec.integrity.printAttempts ?? 0} />
+        <Stat l="DevTools" v={rec.integrity.devtoolsAttempts ?? 0} />
         <Stat l="ASR navegador" v={rec.integrity.speechRecognition ? "Sí" : "No"} />
       </div>
       <div>

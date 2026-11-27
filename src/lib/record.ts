@@ -59,7 +59,18 @@ export interface BaselineRecord {
     skills: Record<SkillKey, number | null>;
     alerts: Placement["alerts"];
   };
-  integrity: { tabSwitches: number; pasteAttempts: number; userAgent: string; speechRecognition: boolean };
+  integrity: {
+    tabSwitches: number;
+    pasteAttempts: number;
+    copyAttempts?: number;
+    screenshotAttempts?: number;
+    focusLosses?: number;
+    fullscreenExits?: number;
+    printAttempts?: number;
+    devtoolsAttempts?: number;
+    userAgent: string;
+    speechRecognition: boolean;
+  };
   responses: {
     reading: ObjectiveSectionResult["items"];
     listening: ObjectiveSectionResult["items"];

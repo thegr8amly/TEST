@@ -12,7 +12,7 @@ export function Register({ initial, onSubmit }: { initial?: CandidateIn; onSubmi
   const field = "mt-1.5 w-full rounded-xl border-0 bg-mist px-4 py-3 text-sm text-navy ring-1 ring-line outline-none transition focus:bg-white focus:ring-2 focus:ring-navy";
   return (
     <div className="mx-auto max-w-3xl animate-rise">
-      <div className="mb-8 text-center">
+      <div className="mb-6 text-center">
         <div className="font-display text-xs font-bold uppercase tracking-[0.2em] text-royal">Paso 1 de 2</div>
         <h1 className="mt-2 font-display text-3xl font-extrabold text-navy sm:text-4xl">Datos del estudiante</h1>
         <p className="mt-2 text-slate-500">Usaremos esta información para tu reporte y tu expediente en el Campus Virtual.</p>
@@ -94,7 +94,7 @@ export function SystemCheck({ onReady }: { onReady: () => void }) {
 
   return (
     <div className="mx-auto max-w-3xl animate-rise">
-      <div className="mb-8 text-center">
+      <div className="mb-6 text-center">
         <div className="font-display text-xs font-bold uppercase tracking-[0.2em] text-royal">Paso 2 de 2</div>
         <h1 className="mt-2 font-display text-3xl font-extrabold text-navy sm:text-4xl">Prueba técnica</h1>
         <p className="mt-2 text-slate-500">Verifiquemos tu audio y micrófono antes de comenzar.</p>
@@ -127,8 +127,15 @@ export function SystemCheck({ onReady }: { onReady: () => void }) {
         <Row ok={asr ? true : false} title="Reconocimiento de voz">
           <p className="mt-1 text-sm text-slate-600">{asr ? "Compatible. Tus respuestas orales se transcribirán automáticamente." : "Tu navegador no transcribe voz. Tu audio se guardará para evaluación docente; para resultados inmediatos usa Google Chrome o Microsoft Edge."}</p>
         </Row>
+        <div className="flex gap-3 rounded-2xl bg-navy p-5 text-sm text-white/80">
+          <svg className="h-6 w-6 shrink-0 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path d="M9 12l2 2 4-4m5.6-4.4A11.9 11.9 0 0112 2.9 11.9 11.9 0 013.4 5.6 12 12 0 0012 21.1a12 12 0 008.6-15.5z" /></svg>
+          <div>
+            <div className="font-display font-bold text-white">Examen protegido</div>
+            El examen se abre en pantalla completa. Copiar, pegar, imprimir y las capturas de pantalla están bloqueados; si sales de la ventana las preguntas se ocultan. Cada incidente queda registrado en tu reporte y el contenido lleva tu nombre como marca de agua.
+          </div>
+        </div>
         <div className="flex flex-col items-center justify-between gap-3 pt-2 sm:flex-row">
-          <p className="text-xs text-slate-500">Al comenzar, no cierres ni cambies de pestaña. Cada sección tiene tiempo límite.</p>
+          <p className="text-xs text-slate-500">Cada sección tiene tiempo límite, con cuenta regresiva visible.</p>
           <PrimaryButton disabled={!audioOk || !micOk} onClick={onReady}>Comenzar el examen</PrimaryButton>
         </div>
       </Card>
@@ -148,20 +155,32 @@ export function SectionIntro({ skill, onStart }: { skill: keyof typeof INTROS; o
   const s = INTROS[skill];
   return (
     <div className="mx-auto max-w-3xl animate-rise">
-      <div className="relative overflow-hidden rounded-[2rem] bg-navy p-8 text-white shadow-2xl shadow-navy/30 sm:p-12">
+      <div className="relative overflow-hidden rounded-[2rem] bg-navy p-8 text-white shadow-2xl shadow-navy/30 sm:p-10">
+        <img src="/brand/inter-emblem.png" alt="" className="pointer-events-none absolute -bottom-20 -right-20 h-72 w-72 animate-spin-slow opacity-15" />
         <div className="grid-bg absolute inset-0" />
         <div className="absolute -right-16 -top-16 h-64 w-64 rounded-full bg-gold/20 blur-3xl" />
         <div className="relative">
-          <div className="flex items-center gap-3">
-            {[1, 2, 3, 4].map((i) => <span key={i} className={`flex h-8 w-8 items-center justify-center rounded-full font-display text-xs font-bold ${i < s.n ? "bg-white/15 text-white/60" : i === s.n ? "bg-gold text-navy-950" : "bg-white/5 text-white/30 ring-1 ring-white/10"}`}>{i < s.n ? "✓" : i}</span>)}
+          {s.n > 1 && (
+            <div className="mb-6 inline-flex animate-pop items-center gap-2 rounded-full bg-sdg-green/20 px-4 py-1.5 text-sm font-semibold text-[#8ee07f] ring-1 ring-sdg-green/40">
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path d="M5 13l4 4L19 7" /></svg>
+              ¡Sección completada! Vas muy bien.
+            </div>
+          )}
+          <div className="flex items-center gap-2">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="flex items-center gap-2">
+                <span className={`flex h-9 w-9 animate-pop items-center justify-center rounded-full font-display text-xs font-bold ${i < s.n ? "bg-sdg-green text-white" : i === s.n ? "bg-gold text-navy-950 shadow-lg shadow-gold/40 ring-4 ring-gold/25" : "bg-white/5 text-white/30 ring-1 ring-white/10"}`} style={{ animationDelay: `${i * 90}ms` }}>{i < s.n ? "✓" : i}</span>
+                {i < 4 && <span className={`h-0.5 w-6 rounded-full sm:w-10 ${i < s.n ? "bg-sdg-green" : "bg-white/10"}`} />}
+              </div>
+            ))}
           </div>
-          <div className="mt-8 font-display text-xs font-bold uppercase tracking-[0.25em] text-gold">Sección {s.n} de 4 · {s.time}</div>
+          <div className="mt-7 font-display text-xs font-bold uppercase tracking-[0.25em] text-gold">Sección {s.n} de 4 · {s.time}</div>
           <h1 className="mt-2 font-display text-5xl font-extrabold tracking-tight">{s.t}</h1>
           <p className="text-lg text-white/60">{s.es}</p>
-          <ul className="mt-8 space-y-3">
-            {s.pts.map((p) => <li key={p} className="flex items-center gap-3 text-white/80"><span className="h-1.5 w-1.5 rounded-full bg-gold" />{p}</li>)}
+          <ul className="mt-6 space-y-3">
+            {s.pts.map((p, i) => <li key={p} className="flex animate-rise items-center gap-3 text-white/80" style={{ animationDelay: `${250 + i * 120}ms` }}><span className="flex h-6 w-6 items-center justify-center rounded-lg bg-gold/15 text-[11px] font-bold text-gold ring-1 ring-gold/30">{i + 1}</span>{p}</li>)}
           </ul>
-          <button onClick={onStart} className="mt-10 rounded-2xl bg-gold px-8 py-4 font-display font-bold text-navy-950 shadow-xl shadow-gold/20 transition hover:-translate-y-0.5 hover:bg-gold-300">Iniciar {s.t}</button>
+          <button onClick={onStart} className="group relative mt-8 overflow-hidden rounded-2xl bg-gold px-8 py-4 font-display font-bold text-navy-950 shadow-xl shadow-gold/20 transition hover:-translate-y-0.5 hover:bg-gold-300"><span className="pointer-events-none absolute inset-y-0 left-0 w-1/3 animate-shine bg-gradient-to-r from-transparent via-white/60 to-transparent" /><span className="relative">Iniciar {s.t} →</span></button>
         </div>
       </div>
     </div>
@@ -170,11 +189,35 @@ export function SectionIntro({ skill, onStart }: { skill: keyof typeof INTROS; o
 
 // ── Submitting ────────────────────────────────────────────────
 const MSGS = ["Calificando Reading con modelo IRT…", "Calificando Listening…", "Analizando tu escritura con rúbrica MCER…", "Evaluando tu expresión oral…", "Calculando tu nivel global…", "Buscando tu módulo INTER ideal…", "Generando tu reporte…"];
+function Confetti() {
+  const colors = ["#faac26", "#132544", "#d13b45", "#43a535", "#0a79b8", "#31d0a1", "#cf4b77", "#eb7419"];
+  const pieces = Array.from({ length: 70 }, (_, i) => i);
+  return (
+    <div aria-hidden className="pointer-events-none fixed inset-0 z-50 overflow-hidden">
+      {pieces.map((i) => (
+        <span
+          key={i}
+          className="absolute top-0 block rounded-sm"
+          style={{
+            left: `${(i * 137) % 100}%`,
+            width: 6 + (i % 4) * 2,
+            height: 10 + (i % 3) * 4,
+            background: colors[i % colors.length],
+            animation: `confetti-fall ${2.6 + (i % 7) * 0.35}s cubic-bezier(0.2,0.6,0.4,1) ${(i % 10) * 0.12}s both`,
+            ["--dx" as string]: `${((i * 53) % 160) - 80}px`,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
 export function Submitting({ error, onRetry }: { error?: string | null; onRetry: () => void }) {
   const [i, setI] = useState(0);
   useEffect(() => { const id = setInterval(() => setI((x) => Math.min(MSGS.length - 1, x + 1)), 3500); return () => clearInterval(id); }, []);
   return (
-    <div className="mx-auto flex max-w-xl flex-col items-center py-16 text-center animate-rise">
+    <div className="mx-auto flex max-w-xl flex-col items-center py-12 text-center animate-rise">
+      {!error && <Confetti />}
       <div className="relative h-40 w-40">
         <div className="absolute inset-0 animate-spin rounded-full border-4 border-line border-t-gold" style={{ animationDuration: "1.4s" }} />
         <div className="absolute inset-4 animate-spin rounded-full border-4 border-transparent border-b-navy" style={{ animationDuration: "2.2s", animationDirection: "reverse" }} />
@@ -190,6 +233,7 @@ export function Submitting({ error, onRetry }: { error?: string | null; onRetry:
         <>
           <h2 className="mt-10 font-display text-2xl font-extrabold text-navy">¡Examen completado!</h2>
           <p key={i} className="mt-3 animate-rise text-slate-500">{MSGS[i]}</p>
+          <div className="mt-6 h-1.5 w-64 overflow-hidden rounded-full bg-line"><div className="h-full rounded-full bg-gradient-to-r from-gold via-royal to-sdg-teal transition-all duration-1000" style={{ width: `${((i + 1) / MSGS.length) * 100}%` }} /></div>
           <p className="mt-8 text-xs text-slate-400">Esto puede tardar hasta un minuto. No cierres esta ventana.</p>
         </>
       )}

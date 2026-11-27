@@ -1,68 +1,72 @@
 import Link from "next/link";
-import Image from "next/image";
 import { BrandLockup } from "@/components/Brand";
-import { CefrScale } from "@/components/CefrScale";
+import { ScaleCycler } from "@/components/landing/ScaleCycler";
+import { HeroOrbit } from "@/components/landing/HeroOrbit";
+import { Navbar } from "@/components/landing/Navbar";
+import { Reveal } from "@/components/Reveal";
 
 const SKILLS = [
-  { key: "Reading", es: "Lectura", min: "20 min", color: "from-sdg-blue to-navy-600", desc: "Textos reales — correos, artículos, informes — que se adaptan a tu nivel en tiempo real.", icon: "M4 5a2 2 0 012-2h9l5 5v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5z M14 3v5h5 M8 13h8 M8 17h5" },
-  { key: "Listening", es: "Comprensión auditiva", min: "15 min", color: "from-sdg-teal to-sdg-blue", desc: "Conversaciones, llamadas, reuniones y conferencias con distintos acentos y velocidades.", icon: "M3 14v-2a9 9 0 0118 0v2 M3 14a2 2 0 012-2h1v7H5a2 2 0 01-2-2v-3z M21 14a2 2 0 00-2-2h-1v7h1a2 2 0 002-2v-3z" },
-  { key: "Writing", es: "Escritura", min: "25 min", color: "from-gold to-sdg-orange", desc: "Un correo profesional y un ensayo de opinión, evaluados con rúbrica MCER asistida por IA.", icon: "M12 20h9 M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z" },
-  { key: "Speaking", es: "Expresión oral", min: "6 min", color: "from-sdg-magenta to-sdg-red", desc: "Tres tareas orales grabadas: presentación, narración y argumentación.", icon: "M12 2a3 3 0 00-3 3v7a3 3 0 006 0V5a3 3 0 00-3-3z M19 10v2a7 7 0 01-14 0v-2 M12 19v3" },
+  { key: "Reading", es: "Lectura", min: "20 min", color: "from-sdg-blue to-navy-600", glow: "group-hover:shadow-sdg-blue/25", desc: "Correos, artículos e informes reales que se adaptan a tu nivel en tiempo real.", icon: "M4 5a2 2 0 012-2h9l5 5v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5z M14 3v5h5 M8 13h8 M8 17h5" },
+  { key: "Listening", es: "Comprensión auditiva", min: "15 min", color: "from-sdg-teal to-sdg-blue", glow: "group-hover:shadow-sdg-teal/25", desc: "Llamadas, reuniones y conferencias con distintos acentos y velocidades.", icon: "M3 14v-2a9 9 0 0118 0v2 M3 14a2 2 0 012-2h1v7H5a2 2 0 01-2-2v-3z M21 14a2 2 0 00-2-2h-1v7h1a2 2 0 002-2v-3z" },
+  { key: "Writing", es: "Escritura", min: "25 min", color: "from-gold to-sdg-orange", glow: "group-hover:shadow-gold/30", desc: "Un correo profesional y un ensayo de opinión, evaluados con rúbrica MCER.", icon: "M12 20h9 M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z" },
+  { key: "Speaking", es: "Expresión oral", min: "6 min", color: "from-sdg-magenta to-sdg-red", glow: "group-hover:shadow-sdg-magenta/25", desc: "Tres tareas grabadas: presentación, narración y argumentación.", icon: "M12 2a3 3 0 00-3 3v7a3 3 0 006 0V5a3 3 0 00-3-3z M19 10v2a7 7 0 01-14 0v-2 M12 19v3" },
 ];
 
 const STEPS = [
-  { n: "01", t: "Registro y prueba técnica", d: "Datos del estudiante, prueba de audio y micrófono." },
-  { n: "02", t: "Examen adaptativo", d: "Cada respuesta ajusta la dificultad: A1 → C2 sin preguntas de relleno." },
-  { n: "03", t: "Calificación objetiva", d: "Modelo psicométrico IRT para lectura y audio; rúbrica MCER con IA para escritura y oral." },
-  { n: "04", t: "Reporte y ubicación", d: "Puntuación por habilidad, nivel MCER y módulo INTER recomendado — la línea base T0 de tu ELR." },
+  { n: "01", t: "Registro y prueba técnica", d: "Datos del estudiante, audio y micrófono.", icon: "M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" },
+  { n: "02", t: "Examen adaptativo", d: "Cada respuesta ajusta la dificultad, de A1 a C2.", icon: "M13 10V3L4 14h7v7l9-11h-7z" },
+  { n: "03", t: "Calificación objetiva", d: "Modelo psicométrico IRT y rúbrica MCER.", icon: "M9 12l2 2 4-4m5.6-4.4A11.9 11.9 0 0112 2.9 11.9 11.9 0 013.4 5.6 12 12 0 0012 21.1a12 12 0 008.6-15.5z" },
+  { n: "04", t: "Reporte y ubicación", d: "Nivel por habilidad, módulo INTER y línea base T0 del ELR.", icon: "M9 17v-2m3 2v-4m3 4v-6M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z" },
+];
+
+const REQS = [
+  { t: "Chrome o Edge en computadora", icon: "M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" },
+  { t: "Audífonos y micrófono", icon: "M3 14v-2a9 9 0 0118 0v2 M3 14a2 2 0 012-2h1v7H5a2 2 0 01-2-2v-3z M21 14a2 2 0 00-2-2h-1v7h1a2 2 0 002-2v-3z" },
+  { t: "Lugar tranquilo · ~60 min", icon: "M12 8v4l3 3M21 12a9 9 0 11-18 0 9 9 0 0118 0z" },
+  { t: "Pantalla completa, sin cambiar de pestaña", icon: "M4 8V4h4M20 8V4h-4M4 16v4h4M20 16v4h-4" },
 ];
 
 export default function Home() {
   return (
     <main className="overflow-x-clip">
+      <Navbar />
+
       {/* ── HERO ─────────────────────────────────────────── */}
-      <section className="relative isolate bg-navy text-white">
+      <section id="inicio" className="relative isolate overflow-hidden bg-navy text-white">
         <div className="grid-bg absolute inset-0 -z-10" />
-        <div className="absolute -top-40 -right-40 -z-10 h-[38rem] w-[38rem] rounded-full bg-royal/40 blur-3xl" />
+        <div className="absolute -top-40 -right-40 -z-10 h-[38rem] w-[38rem] animate-glow rounded-full bg-royal/40 blur-3xl" />
         <div className="absolute -bottom-48 -left-32 -z-10 h-[30rem] w-[30rem] rounded-full bg-gold/15 blur-3xl" />
 
-        <header className="mx-auto flex max-w-7xl items-center justify-between px-4 py-5 sm:px-8">
-          <BrandLockup dark />
-          <nav className="hidden items-center gap-8 text-sm text-white/70 md:flex">
-            <a href="#habilidades" className="hover:text-white">Habilidades</a>
-            <a href="#proceso" className="hover:text-white">Cómo funciona</a>
-            <a href="#escala" className="hover:text-white">Escala MCER</a>
-          </nav>
-          <Link href="/test" className="rounded-full bg-white/10 px-4 py-2 text-sm font-semibold ring-1 ring-white/20 backdrop-blur transition hover:bg-white/20">
-            Iniciar
-          </Link>
-        </header>
-
-        <div className="mx-auto grid max-w-7xl items-center gap-12 px-4 pb-24 pt-10 sm:px-8 lg:grid-cols-[1.1fr_0.9fr] lg:pb-32 lg:pt-16">
+        <div className="mx-auto grid max-w-6xl items-center gap-6 px-4 pb-12 pt-24 sm:px-6 sm:pt-28 lg:grid-cols-[1.05fr_0.95fr] lg:gap-4 lg:pb-14">
           <div className="animate-rise">
-            <span className="inline-flex items-center gap-2 rounded-full bg-gold/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-gold ring-1 ring-gold/30">
-              <span className="h-1.5 w-1.5 rounded-full bg-gold" /> INTER Placement Test
+            <span className="inline-flex items-center gap-2 rounded-full bg-gold/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-gold ring-1 ring-gold/30">
+              <span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-gold opacity-75" /><span className="relative inline-flex h-2 w-2 rounded-full bg-gold" /></span>
+              INTER Placement Test
             </span>
-            <h1 className="mt-6 font-display text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl">
+            <h1 className="mt-5 font-display text-[2.4rem] font-extrabold leading-[1.04] tracking-tight sm:text-[3.3rem] xl:text-[3.7rem]">
               Tu nivel real de inglés.
               <br />
-              <span className="text-gradient-gold">Cuatro habilidades.</span>
+              <span className="text-gradient-gold sm:whitespace-nowrap">Cuatro habilidades.</span>
               <br />
               Un solo resultado.
             </h1>
-            <p className="mt-6 max-w-xl text-lg leading-relaxed text-white/70">
+            <p className="mt-5 max-w-xl text-base leading-relaxed text-white/70 sm:text-lg">
               Evaluación adaptativa alineada al Marco Común Europeo de Referencia (MCER). Mide lectura, comprensión auditiva, escritura y expresión oral, y te ubica en el módulo INTER ideal para empezar.
             </p>
-            <div className="mt-9 flex flex-wrap items-center gap-4">
-              <Link href="/test" className="group inline-flex items-center gap-3 rounded-2xl bg-gold px-7 py-4 font-display text-base font-bold text-navy-950 shadow-xl shadow-gold/25 transition hover:-translate-y-0.5 hover:bg-gold-300">
-                Comenzar evaluación
-                <svg className="h-5 w-5 transition group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path d="M5 12h14M13 5l7 7-7 7" /></svg>
+            <div className="mt-7 flex flex-wrap items-center gap-4">
+              <Link href="/test" className="group relative inline-flex items-center gap-3 overflow-hidden rounded-2xl bg-gold px-7 py-4 font-display text-base font-bold text-navy-950 shadow-xl shadow-gold/25 transition hover:-translate-y-0.5 hover:bg-gold-300">
+                <span className="pointer-events-none absolute inset-y-0 left-0 w-1/3 animate-shine bg-gradient-to-r from-transparent via-white/60 to-transparent" />
+                <span className="relative">Comenzar evaluación</span>
+                <svg className="relative h-5 w-5 transition group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path d="M5 12h14M13 5l7 7-7 7" /></svg>
               </Link>
-              <span className="text-sm text-white/50">≈ 60 minutos · Resultado inmediato</span>
+              <span className="flex items-center gap-2 text-sm text-white/55">
+                <svg className="h-4 w-4 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path d="M12 8v4l3 3M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                ≈ 60 minutos · Resultado inmediato
+              </span>
             </div>
-            <dl className="mt-12 grid max-w-lg grid-cols-3 gap-4">
-              {[["A0–C2", "Rango medido"], ["4", "Habilidades"], ["T0", "Línea base ELR"]].map(([v, l]) => (
-                <div key={l} className="glass-dark rounded-2xl px-4 py-3">
+            <dl className="mt-8 grid max-w-lg grid-cols-3 gap-3">
+              {[["A0–C2", "Rango medido"], ["4", "Habilidades"], ["T0", "Línea base ELR"]].map(([v, l], i) => (
+                <div key={l} className="glass-dark animate-rise rounded-2xl px-4 py-3 transition hover:-translate-y-0.5 hover:bg-white/10" style={{ animationDelay: `${300 + i * 120}ms` }}>
                   <dt className="font-display text-2xl font-extrabold text-white">{v}</dt>
                   <dd className="text-xs text-white/55">{l}</dd>
                 </div>
@@ -70,115 +74,113 @@ export default function Home() {
             </dl>
           </div>
 
-          <div className="relative mx-auto aspect-square w-full max-w-md animate-rise [animation-delay:150ms]">
-            <div className="absolute inset-6 rounded-full bg-gradient-to-tr from-gold/30 via-royal/30 to-sdg-teal/20 blur-2xl" />
-            <Image src="/brand/inter-emblem.png" alt="" fill sizes="(max-width: 1024px) 80vw, 420px" className="animate-spin-slow object-contain drop-shadow-2xl" priority />
-            {/* floating result preview */}
-            <div className="glass absolute -bottom-4 left-0 w-56 animate-float rounded-2xl p-4 text-navy shadow-2xl sm:-left-10">
-              <div className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">Resultado global</div>
-              <div className="mt-1 flex items-baseline gap-2">
-                <span className="font-display text-4xl font-extrabold">58</span>
-                <span className="text-sm text-slate-400">/100</span>
-                <span className="ml-auto rounded-lg bg-navy px-2 py-0.5 font-display text-xs font-bold text-gold">B2</span>
-              </div>
-              <div className="mt-3 space-y-1.5">
-                {[["Reading", 64, "#0a79b8"], ["Listening", 61, "#31d0a1"], ["Writing", 52, "#faac26"], ["Speaking", 55, "#cf4b77"]].map(([k, v, c]) => (
-                  <div key={k as string} className="flex items-center gap-2 text-[11px]">
-                    <span className="w-16 text-slate-500">{k}</span>
-                    <span className="h-1.5 flex-1 rounded-full bg-slate-100"><span className="block h-full rounded-full" style={{ width: `${v}%`, background: c as string }} /></span>
-                    <span className="w-6 text-right font-semibold tabular-nums">{v}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="glass absolute -right-2 top-6 animate-float rounded-2xl px-4 py-3 text-navy shadow-xl [animation-delay:-4s] sm:-right-8">
-              <div className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">Ubicación sugerida</div>
-              <div className="font-display text-sm font-bold">Intermediate Master</div>
-            </div>
+          <div className="animate-rise [animation-delay:200ms]">
+            <HeroOrbit />
           </div>
         </div>
         <div className="sdg-bar h-1.5 w-full" />
       </section>
 
       {/* ── SKILLS ───────────────────────────────────────── */}
-      <section id="habilidades" className="mx-auto max-w-7xl px-4 py-24 sm:px-8">
-        <div className="max-w-2xl">
-          <p className="font-display text-sm font-bold uppercase tracking-[0.2em] text-royal">Las cuatro habilidades</p>
-          <h2 className="mt-3 font-display text-3xl font-extrabold tracking-tight text-navy sm:text-4xl">Una radiografía completa de tu inglés</h2>
-          <p className="mt-4 text-slate-600">Cada habilidad recibe su propia puntuación de 0 a 100 y su nivel MCER. El promedio define tu nivel global y tu módulo de entrada.</p>
-        </div>
-        <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+      <section id="habilidades" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-16 sm:px-6">
+        <Reveal className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
+          <div className="max-w-xl">
+            <p className="font-display text-xs font-bold uppercase tracking-[0.2em] text-royal">Las cuatro habilidades</p>
+            <h2 className="mt-2 font-display text-3xl font-extrabold tracking-tight text-navy sm:text-4xl">Una radiografía completa de tu inglés</h2>
+          </div>
+          <p className="max-w-md text-sm text-slate-600">Cada habilidad recibe su puntuación de 0 a 100 y su nivel MCER. El promedio define tu nivel global y tu módulo de entrada.</p>
+        </Reveal>
+        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {SKILLS.map((s, i) => (
-            <article key={s.key} className="group relative overflow-hidden rounded-3xl bg-white p-6 ring-1 ring-line transition hover:-translate-y-1 hover:shadow-2xl hover:shadow-navy/10" style={{ animationDelay: `${i * 80}ms` }}>
-              <div className={`inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br ${s.color} text-white shadow-lg`}>
-                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><path d={s.icon} /></svg>
+            <Reveal key={s.key} delay={i * 110} as="article">
+              <div className={`group relative h-full overflow-hidden rounded-3xl bg-white p-6 ring-1 ring-line transition duration-500 hover:-translate-y-1.5 hover:shadow-2xl ${s.glow}`}>
+                <div className={`absolute inset-x-0 top-0 h-1 origin-left scale-x-0 bg-gradient-to-r ${s.color} transition-transform duration-500 group-hover:scale-x-100`} />
+                <div className="flex items-start justify-between">
+                  <div className={`inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br ${s.color} text-white shadow-lg transition duration-500 group-hover:-rotate-6 group-hover:scale-110`}>
+                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><path d={s.icon} /></svg>
+                  </div>
+                  <span className="rounded-full bg-mist px-2.5 py-1 text-[11px] font-semibold text-slate-500 ring-1 ring-line">{s.min}</span>
+                </div>
+                <h3 className="mt-4 font-display text-xl font-bold text-navy">{s.key}</h3>
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">{s.es}</p>
+                <p className="mt-2.5 text-sm leading-relaxed text-slate-600">{s.desc}</p>
+                <div className={`absolute -bottom-12 -right-12 h-32 w-32 rounded-full bg-gradient-to-br ${s.color} opacity-0 blur-2xl transition duration-500 group-hover:opacity-30`} />
               </div>
-              <h3 className="mt-5 font-display text-xl font-bold text-navy">{s.key}</h3>
-              <p className="text-sm font-medium text-slate-400">{s.es} · {s.min}</p>
-              <p className="mt-3 text-sm leading-relaxed text-slate-600">{s.desc}</p>
-              <div className={`absolute -bottom-10 -right-10 h-28 w-28 rounded-full bg-gradient-to-br ${s.color} opacity-0 blur-2xl transition group-hover:opacity-30`} />
-            </article>
+            </Reveal>
           ))}
         </div>
       </section>
 
       {/* ── PROCESS ──────────────────────────────────────── */}
-      <section id="proceso" className="bg-white py-24">
-        <div className="mx-auto grid max-w-7xl gap-12 px-4 sm:px-8 lg:grid-cols-[0.8fr_1.2fr]">
-          <div>
-            <p className="font-display text-sm font-bold uppercase tracking-[0.2em] text-royal">Cómo funciona</p>
-            <h2 className="mt-3 font-display text-3xl font-extrabold tracking-tight text-navy sm:text-4xl">Diseñado como línea base para tu progreso</h2>
-            <p className="mt-4 text-slate-600">
-              Tu resultado se convierte en el punto de partida (T0) del <strong className="text-navy">Executive Learning Report</strong>: a partir de aquí, el Campus Virtual dibuja tu curva de aprendizaje y alerta cuando tu desempeño necesita atención.
+      <section id="proceso" className="scroll-mt-20 bg-white py-16">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <Reveal className="mx-auto max-w-2xl text-center">
+            <p className="font-display text-xs font-bold uppercase tracking-[0.2em] text-royal">Cómo funciona</p>
+            <h2 className="mt-2 font-display text-3xl font-extrabold tracking-tight text-navy sm:text-4xl">Diseñado como línea base de tu progreso</h2>
+            <p className="mt-3 text-sm text-slate-600 sm:text-base">
+              Tu resultado es el punto de partida (T0) del <strong className="text-navy">Executive Learning Report</strong>: desde aquí el Campus Virtual dibuja tu curva de aprendizaje.
             </p>
-          </div>
-          <ol className="grid gap-4 sm:grid-cols-2">
-            {STEPS.map((s) => (
-              <li key={s.n} className="rounded-3xl bg-mist p-6 ring-1 ring-line">
-                <span className="font-display text-3xl font-extrabold text-gold">{s.n}</span>
-                <h3 className="mt-3 font-display text-lg font-bold text-navy">{s.t}</h3>
-                <p className="mt-1.5 text-sm text-slate-600">{s.d}</p>
-              </li>
+          </Reveal>
+          <ol className="relative mt-10 grid gap-4 md:grid-cols-4">
+            <div className="absolute left-[12%] right-[12%] top-7 hidden h-0.5 md:block">
+              <Reveal className="h-full"><div className="h-full origin-left animate-draw bg-gradient-to-r from-gold via-royal to-sdg-teal" /></Reveal>
+            </div>
+            {STEPS.map((s, i) => (
+              <Reveal key={s.n} as="li" delay={i * 140} className="relative">
+                <div className="group flex h-full flex-col items-center rounded-3xl bg-mist p-5 text-center ring-1 ring-line transition hover:-translate-y-1 hover:bg-white hover:shadow-xl">
+                  <span className="relative z-10 flex h-14 w-14 items-center justify-center rounded-2xl bg-navy text-gold shadow-lg shadow-navy/30 transition duration-500 group-hover:rotate-6 group-hover:scale-110">
+                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><path d={s.icon} /></svg>
+                  </span>
+                  <span className="mt-3 font-display text-xs font-extrabold tracking-widest text-gold">PASO {s.n}</span>
+                  <h3 className="mt-1 font-display text-base font-bold text-navy">{s.t}</h3>
+                  <p className="mt-1 text-sm text-slate-600">{s.d}</p>
+                </div>
+              </Reveal>
             ))}
           </ol>
         </div>
       </section>
 
       {/* ── SCALE ────────────────────────────────────────── */}
-      <section id="escala" className="mx-auto max-w-5xl px-4 py-24 sm:px-8">
-        <div className="text-center">
-          <p className="font-display text-sm font-bold uppercase tracking-[0.2em] text-royal">Escala INTER · MCER</p>
-          <h2 className="mt-3 font-display text-3xl font-extrabold tracking-tight text-navy sm:text-4xl">De 0 a 100, del A0 al C2</h2>
-        </div>
-        <div className="mt-10"><CefrScale active="B2" /></div>
-        <p className="mx-auto mt-6 max-w-2xl text-center text-xs text-slate-500">
-          Evaluación diagnóstica interna alineada a los descriptores del MCER. No constituye una certificación oficial externa.
-        </p>
+      <section id="escala" className="mx-auto max-w-5xl scroll-mt-20 px-4 py-16 sm:px-6">
+        <Reveal className="text-center">
+          <p className="font-display text-xs font-bold uppercase tracking-[0.2em] text-royal">Escala INTER · MCER</p>
+          <h2 className="mt-2 font-display text-3xl font-extrabold tracking-tight text-navy sm:text-4xl">De 0 a 100, del A0 al C2</h2>
+        </Reveal>
+        <Reveal delay={150} className="mt-8"><ScaleCycler /></Reveal>
+        <p className="mx-auto mt-4 max-w-2xl text-center text-xs text-slate-500">Evaluación diagnóstica interna alineada a los descriptores del MCER. No constituye una certificación oficial externa.</p>
       </section>
 
-      {/* ── CTA ──────────────────────────────────────────── */}
-      <section className="px-4 pb-24 sm:px-8">
-        <div className="relative mx-auto max-w-7xl overflow-hidden rounded-[2rem] bg-navy px-6 py-14 text-center text-white sm:px-16">
+      {/* ── REQUIREMENTS + CTA ───────────────────────────── */}
+      <section id="requisitos" className="scroll-mt-20 px-4 pb-16 sm:px-6">
+        <Reveal className="relative mx-auto max-w-6xl overflow-hidden rounded-[2rem] bg-navy px-6 py-10 text-white sm:px-12">
           <div className="grid-bg absolute inset-0" />
-          <div className="relative">
-            <h2 className="font-display text-3xl font-extrabold sm:text-4xl">Antes de empezar</h2>
-            <ul className="mx-auto mt-8 grid max-w-4xl gap-3 text-left text-sm sm:grid-cols-4">
-              {["Computadora con Google Chrome o Microsoft Edge", "Audífonos y micrófono funcionando", "Un lugar tranquilo y ~60 minutos", "No cierres ni cambies de pestaña"].map((t) => (
-                <li key={t} className="glass-dark flex items-start gap-2 rounded-2xl p-4 text-white/80">
-                  <svg className="mt-0.5 h-4 w-4 shrink-0 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path d="M5 13l4 4L19 7" /></svg>
-                  {t}
-                </li>
-              ))}
-            </ul>
-            <Link href="/test" className="mt-10 inline-flex items-center gap-3 rounded-2xl bg-gold px-8 py-4 font-display font-bold text-navy-950 shadow-xl shadow-gold/20 transition hover:bg-gold-300">
-              Estoy listo · Comenzar
+          <div className="absolute -right-20 -top-20 h-72 w-72 animate-glow rounded-full bg-gold/20 blur-3xl" />
+          <div className="relative grid items-center gap-8 lg:grid-cols-[1fr_auto]">
+            <div>
+              <h2 className="font-display text-2xl font-extrabold sm:text-3xl">Antes de empezar</h2>
+              <ul className="mt-5 grid gap-3 sm:grid-cols-2">
+                {REQS.map((r) => (
+                  <li key={r.t} className="glass-dark flex items-center gap-3 rounded-2xl p-3.5 text-sm text-white/85 transition hover:bg-white/10">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gold/15 text-gold ring-1 ring-gold/30">
+                      <svg className="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d={r.icon} /></svg>
+                    </span>
+                    {r.t}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <Link href="/test" className="group relative inline-flex items-center justify-center gap-3 overflow-hidden rounded-2xl bg-gold px-8 py-5 font-display text-lg font-bold text-navy-950 shadow-xl shadow-gold/20 transition hover:-translate-y-0.5 hover:bg-gold-300">
+              <span className="pointer-events-none absolute inset-y-0 left-0 w-1/3 animate-shine bg-gradient-to-r from-transparent via-white/60 to-transparent" />
+              <span className="relative">Estoy listo · Comenzar</span>
+              <svg className="relative h-5 w-5 transition group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path d="M5 12h14M13 5l7 7-7 7" /></svg>
             </Link>
           </div>
-        </div>
+        </Reveal>
       </section>
 
       <footer className="border-t border-line bg-white">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 py-8 text-xs text-slate-500 sm:flex-row sm:px-8">
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 py-6 text-xs text-slate-500 sm:flex-row sm:px-6">
           <BrandLockup />
           <p>© {new Date().getFullYear()} Instituto Interamericano de Lenguas · INTER Classrooms</p>
         </div>

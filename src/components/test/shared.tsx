@@ -13,6 +13,17 @@ export interface AnswerRec { testletId: string; questionId: string; choice: numb
 export interface SpeakingRec { taskId: string; transcript: string; durationSec: number; asrConfidence: number | null; audioPath?: string }
 export interface CandidateIn { fullName: string; email: string; phone?: string; studentId?: string; organization?: string; cohort?: string; purpose?: string }
 
+export interface Integrity {
+  tabSwitches: number;
+  pasteAttempts: number;
+  copyAttempts?: number;
+  screenshotAttempts?: number;
+  focusLosses?: number;
+  fullscreenExits?: number;
+  printAttempts?: number;
+  devtoolsAttempts?: number;
+}
+
 export interface TestState {
   attemptId: string;
   startedAt: string;
@@ -25,7 +36,7 @@ export interface TestState {
   writing: Record<string, string>;
   speaking: SpeakingRec[];
   deadlines: Partial<Record<"reading" | "listening" | "writing", number>>;
-  integrity: { tabSwitches: number; pasteAttempts: number };
+  integrity: Integrity;
   plays: Record<string, number>;
 }
 
