@@ -32,7 +32,7 @@ export function Navbar() {
   return (
     <div className="fixed inset-x-0 top-0 z-50 flex justify-center px-3 pt-3 sm:px-6 sm:pt-4">
       <nav
-        className={`flex w-full max-w-6xl items-center justify-between gap-3 rounded-2xl px-3 py-2 transition-all duration-500 sm:px-4 ${
+        className={`flex w-full max-w-[76rem] items-center justify-between gap-3 rounded-2xl px-3 py-2 transition-all duration-500 sm:px-4 ${
           scrolled ? "bg-navy/95 shadow-2xl shadow-black/30 ring-1 ring-white/10 backdrop-blur-2xl" : "bg-white/[0.04] ring-1 ring-white/10 backdrop-blur-md"
         }`}
       >

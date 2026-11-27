@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { BrandLockup } from "@/components/Brand";
 import { ScaleCycler } from "@/components/landing/ScaleCycler";
@@ -33,42 +34,51 @@ export default function Home() {
 
       {/* ── HERO ─────────────────────────────────────────── */}
       <section id="inicio" className="relative isolate overflow-hidden bg-navy text-white">
-        <div className="grid-bg absolute inset-0 -z-10" />
-        <div className="absolute -top-40 -right-40 -z-10 h-[38rem] w-[38rem] animate-glow rounded-full bg-royal/40 blur-3xl" />
-        <div className="absolute -bottom-48 -left-32 -z-10 h-[30rem] w-[30rem] rounded-full bg-gold/15 blur-3xl" />
+        {/* photo backdrop, tinted into the brand navy */}
+        <div aria-hidden className="absolute inset-y-0 right-0 -z-20 w-full lg:w-[84%]">
+          <Image src="/images/hero-student.webp" alt="" fill priority sizes="(max-width: 1024px) 100vw, 84vw" className="object-cover object-[55%_25%] opacity-40 mix-blend-luminosity lg:opacity-60" />
+        </div>
+        <div aria-hidden className="absolute inset-0 -z-10 bg-[linear-gradient(90deg,#0f1d36_0%,rgba(19,37,68,0.93)_30%,rgba(19,37,68,0.45)_52%,rgba(19,37,68,0.6)_66%,rgba(19,37,68,0.88)_84%,#0f1d36_100%)]" />
+        <div aria-hidden className="absolute inset-0 -z-10 bg-[linear-gradient(180deg,rgba(15,29,54,0.75)_0%,transparent_22%,transparent_70%,#0f1d36_100%)]" />
+        <div className="grid-bg absolute inset-0 -z-10 opacity-60" />
+        <div className="absolute -top-40 -right-40 -z-10 h-[38rem] w-[38rem] animate-glow rounded-full bg-royal/30 blur-3xl" />
 
-        <div className="mx-auto grid max-w-6xl items-center gap-6 px-4 pb-12 pt-24 sm:px-6 sm:pt-28 lg:grid-cols-[1.05fr_0.95fr] lg:gap-4 lg:pb-14">
+        <div className="mx-auto grid max-w-7xl items-center gap-6 px-4 pb-12 pt-24 sm:px-6 sm:pt-28 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:gap-4 lg:px-8 lg:pb-14">
           <div className="animate-rise">
-            <span className="inline-flex items-center gap-2 rounded-full bg-gold/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-gold ring-1 ring-gold/30">
+            <span className="inline-flex items-center gap-2 rounded-full bg-navy-950/40 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-gold ring-1 ring-gold/50 backdrop-blur">
               <span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-gold opacity-75" /><span className="relative inline-flex h-2 w-2 rounded-full bg-gold" /></span>
               INTER Placement Test
             </span>
-            <h1 className="mt-5 font-display text-[2.4rem] font-extrabold leading-[1.04] tracking-tight sm:text-[3.3rem] xl:text-[3.7rem]">
-              Tu nivel real de inglés.
+            <h1 className="mt-5 font-display text-[2.05rem] font-extrabold leading-[1.08] tracking-tight drop-shadow-[0_2px_18px_rgba(0,0,0,0.35)] sm:text-[2.8rem] lg:text-[2.6rem] xl:text-[3.1rem]">
+              Descubre tu nivel real de inglés.
               <br />
-              <span className="text-gradient-gold sm:whitespace-nowrap">Cuatro habilidades.</span>
+              <span className="text-gradient-gold whitespace-nowrap">Cuatro habilidades.</span>
               <br />
-              Un solo resultado.
+              <span className="text-[0.86em] lg:whitespace-nowrap">Un perfil lingüístico completo.</span>
             </h1>
-            <p className="mt-5 max-w-xl text-base leading-relaxed text-white/70 sm:text-lg">
+            <p className="mt-5 max-w-xl text-base leading-relaxed text-white/80 sm:text-lg">
               Evaluación adaptativa alineada al Marco Común Europeo de Referencia (MCER). Mide lectura, comprensión auditiva, escritura y expresión oral, y te ubica en el módulo INTER ideal para empezar.
             </p>
-            <div className="mt-7 flex flex-wrap items-center gap-4">
-              <Link href="/test" className="group relative inline-flex items-center gap-3 overflow-hidden rounded-2xl bg-gold px-7 py-4 font-display text-base font-bold text-navy-950 shadow-xl shadow-gold/25 transition hover:-translate-y-0.5 hover:bg-gold-300">
+            <div className="mt-7 flex flex-wrap items-center gap-x-5 gap-y-3">
+              <Link href="/test" className="group relative inline-flex items-center gap-3 overflow-hidden rounded-2xl bg-gold px-7 py-4 font-display text-base font-bold text-navy-950 shadow-xl shadow-gold/25 transition hover:-translate-y-0.5 hover:bg-gold-300 sm:text-lg">
                 <span className="pointer-events-none absolute inset-y-0 left-0 w-1/3 animate-shine bg-gradient-to-r from-transparent via-white/60 to-transparent" />
                 <span className="relative">Comenzar evaluación</span>
                 <svg className="relative h-5 w-5 transition group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path d="M5 12h14M13 5l7 7-7 7" /></svg>
               </Link>
-              <span className="flex items-center gap-2 text-sm text-white/55">
-                <svg className="h-4 w-4 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path d="M12 8v4l3 3M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                ≈ 60 minutos · Resultado inmediato
+              <span className="flex items-center gap-2 text-sm text-white/75">
+                <svg className="h-5 w-5 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path d="M12 8v4l3 3M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                ≈ 60 minutos · Resultado rápido
               </span>
             </div>
-            <dl className="mt-8 grid max-w-lg grid-cols-3 gap-3">
-              {[["A0–C2", "Rango medido"], ["4", "Habilidades"], ["T0", "Línea base ELR"]].map(([v, l], i) => (
-                <div key={l} className="glass-dark animate-rise rounded-2xl px-4 py-3 transition hover:-translate-y-0.5 hover:bg-white/10" style={{ animationDelay: `${300 + i * 120}ms` }}>
-                  <dt className="font-display text-2xl font-extrabold text-white">{v}</dt>
-                  <dd className="text-xs text-white/55">{l}</dd>
+            <p className="mt-5 flex items-center gap-2 text-sm text-white/75">
+              <svg className="h-5 w-5 shrink-0 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path d="M9 12l2 2 4-4m5.6-4.4A11.9 11.9 0 0112 2.9 11.9 11.9 0 013.4 5.6 12 12 0 0012 21.1a12 12 0 008.6-15.5z" /></svg>
+              Evaluación individual · Alineada al MCER · Resultados confidenciales
+            </p>
+            <dl className="mt-7 grid max-w-xl grid-cols-3 gap-3">
+              {[["Pre-A1–C2", "Rango medido"], ["4", "Habilidades"], ["T0", "Punto de partida"]].map(([v, l], i) => (
+                <div key={l} className="glass-dark animate-rise rounded-2xl px-4 py-3.5 transition hover:-translate-y-0.5 hover:bg-white/10" style={{ animationDelay: `${300 + i * 120}ms` }}>
+                  <dt className="font-display text-xl font-extrabold text-white sm:text-[1.7rem]">{v}</dt>
+                  <dd className="text-xs text-white/65 sm:text-sm">{l}</dd>
                 </div>
               ))}
             </dl>
