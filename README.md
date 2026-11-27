@@ -30,15 +30,30 @@ Sin variables de entorno la app funciona completa: Writing/Speaking reciben punt
 | `ANTHROPIC_API_KEY` | Calificación con IA de Writing y Speaking |
 | `SCORING_MODEL` | Opcional, por defecto `claude-opus-5-5` |
 | `BLOB_READ_WRITE_TOKEN` | Guardar resultados y audios (se crea al conectar un Blob store) |
-| `ADMIN_KEY` | Acceso a `/admin`, CSV y API |
+| `ADMIN_KEY` | Acceso a `/admin` (sesión), CSV y API (Bearer) |
+| `ID_SECRET` | Secreto estable para `candidateId` seudónimo |
 | `RESULTS_WEBHOOK_URL` / `RESULTS_WEBHOOK_SECRET` | Enviar cada resultado al Campus Virtual / hoja ELR |
+
+## Calidad
+
+```bash
+npm run lint        # ESLint (eslint-config-next)
+npm run typecheck   # TypeScript
+npm test            # unit tests + academic lock
+npm run build
+BASE=http://localhost:3000 npm run test:e2e        # full candidate journey
+BASE=http://localhost:3000 node tests/e2e/a11y.cjs # WCAG 2.2 A/AA (axe)
+```
+
+Documentación: `docs/AUDIT.md` · `docs/INTEGRATION.md` · `docs/PENDING-ACADEMIC-APPROVAL.md` · `CHANGELOG.md`.
+Skills de proyecto (reutilizables en otros proyectos INTER): `.claude/skills/inter-design-system`, `inter-assessment-standards`, `inter-learning-analytics`.
 
 ## Rutas
 
-- `/` portada · `/test` examen · `/report/{id}` reporte (PDF) · `/admin?key=…` panel
+- `/` portada · `/test` examen (`?org=&cohort=&sid=` para enlaces institucionales) · `/report/{id}` reporte (PDF) · `/admin` panel (sesión segura)
 - `POST /api/section/next` motor adaptativo (las claves nunca salen del servidor)
 - `POST /api/results` califica todo y guarda el Baseline Record
-- `GET /api/results/{id}` (Bearer `ADMIN_KEY`) · `GET /api/admin/export?key=…` CSV para ELR
+- `GET /api/results/{id}` (Bearer `ADMIN_KEY`) · `GET /api/admin/export?org=&cohort=&period=` CSV para ELR (sesión admin)
 
 ## Dónde editar
 
