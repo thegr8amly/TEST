@@ -2,13 +2,14 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ReportView } from "@/components/ReportView";
-import type { BaselineRecord } from "@/lib/record";
+import type { PublicRecord } from "@/lib/record";
 
 export default function Page() {
-  const [rec, setRec] = useState<BaselineRecord | null | undefined>(undefined);
+  const [rec, setRec] = useState<PublicRecord | null | undefined>(undefined);
   useEffect(() => {
     try {
       const raw = localStorage.getItem("inter-ipt-last-result");
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage is only available after hydration
       setRec(raw ? JSON.parse(raw) : null);
     } catch {
       setRec(null);

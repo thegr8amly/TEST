@@ -20,27 +20,27 @@ export function HeaderTimer({ deadline, totalMs, label }: { deadline: number; to
 
   const pct = totalMs ? Math.max(0, Math.min(1, left / totalMs)) : 0;
   const state = left <= 60_000 ? "crit" : left <= 5 * 60_000 ? "warn" : "ok";
-  const color = state === "crit" ? "#d13b45" : state === "warn" ? "#eb7419" : "#132544";
+  const color = state === "crit" ? "#b3262f" : state === "warn" ? "#b45309" : "#132544";
   const R = 19;
   const C = 2 * Math.PI * R;
   const [mm, ss] = fmt(left).split(":");
 
   return (
     <>
-      <div className={`flex items-center gap-3 rounded-2xl py-1.5 pl-1.5 pr-4 ring-1 transition-colors duration-500 ${state === "crit" ? "bg-sdg-red/10 ring-sdg-red/30 animate-shake" : state === "warn" ? "bg-sdg-orange/10 ring-sdg-orange/30" : "bg-white ring-line"}`} style={state === "crit" ? { animationIterationCount: "infinite", animationDuration: "2.5s" } : undefined}>
-        <svg width="46" height="46" viewBox="0 0 46 46" className="-rotate-90">
+      <div role="timer" aria-label={`Tiempo restante de ${label}: ${mm} minutos ${ss} segundos`} className={`flex items-center gap-3 rounded-xl border py-1 pl-1 pr-4 transition-colors duration-500 ${state === "crit" ? "border-sdg-red/40 bg-sdg-red/5" : state === "warn" ? "border-sdg-orange/40 bg-sdg-orange/5" : "border-line bg-white"}`}>
+        <svg width="42" height="42" viewBox="0 0 46 46" className="-rotate-90" aria-hidden>
           <circle cx="23" cy="23" r={R} fill="none" stroke={color} strokeOpacity="0.12" strokeWidth="5" />
           <circle cx="23" cy="23" r={R} fill="none" stroke={color} strokeWidth="5" strokeLinecap="round" strokeDasharray={C} strokeDashoffset={C * (1 - pct)} style={{ transition: "stroke-dashoffset 0.5s linear, stroke 0.5s" }} />
         </svg>
         <div className="leading-none">
-          <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">{label}</div>
+          <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-600">{label}</div>
           <div className="mt-1 font-display text-2xl font-extrabold tabular-nums" style={{ color }}>
-            {mm}<span className="animate-tick">:</span>{ss}
+            {mm}:{ss}
           </div>
         </div>
       </div>
       {alert && (
-        <div className={`fixed left-1/2 top-24 z-50 flex animate-toast items-center gap-2 rounded-2xl px-5 py-3 text-sm font-bold text-white shadow-2xl ${state === "crit" ? "bg-sdg-red" : "bg-sdg-orange"}`}>
+        <div role="status" aria-live="assertive" className={`fixed left-1/2 top-20 z-50 flex -translate-x-1/2 items-center gap-2 rounded-xl px-5 py-3 text-sm font-bold text-white shadow-lg motion-safe:animate-toast ${state === "crit" ? "bg-[#b3262f]" : "bg-navy"}`}>
           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}><path d="M12 8v4l3 3M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
           {alert}
         </div>

@@ -18,6 +18,10 @@ Placement Test ──(Baseline Record T0)──► Campus Virtual DB ──► E
 
 ## 2. El contrato: Baseline Record
 
+Referencia completa de identificadores y convenciones: `.claude/skills/inter-learning-analytics/SKILL.md`.
+
+**Enlaces institucionales:** `/test?org=<slug>&cohort=<slug>&sid=<studentId>` asignan `organizationId`, `cohortId` y `studentId` de forma consistente.
+
 Definido en `src/lib/record.ts`. Campos clave:
 
 | Campo | Descripción |
@@ -40,13 +44,13 @@ Define `RESULTS_WEBHOOK_URL` en Vercel. Al terminar cada examen se hace `POST` c
 Si defines `RESULTS_WEBHOOK_SECRET`, se envía la cabecera `X-Inter-Signature` = HMAC-SHA256 (hex) del cuerpo, para que el receptor verifique el origen.
 
 ### b) API de consulta
-`GET /api/results/{id}` con `Authorization: Bearer <ADMIN_KEY>` → Baseline Record completo.
+`GET /api/results/{attemptId}` con `Authorization: Bearer <ADMIN_KEY>` → Baseline Record completo.
 
 ### c) Exportación CSV
-`/api/admin/export?key=<ADMIN_KEY>` — columnas alineadas con *ELR_INTER › 01_SETUP › Lista de participantes* (Student ID, nombres, correo, teléfono, **Baseline CEFR**) + T0 por habilidad, módulo y alertas.
+`/api/admin/export?org=&cohort=&period=&level=&status=` (requiere sesión de administrador) — incluye `attempt_id`, `candidate_id`, `organization_id`, `cohort_id`, versiones y columnas alineadas con *ELR_INTER › 01_SETUP › Lista de participantes* (Student ID, nombres, correo, teléfono, **Baseline CEFR**) + T0 por habilidad, módulo y alertas.
 
 ### d) Panel
-`/admin?key=<ADMIN_KEY>` — listado, distribución MCER, reporte con evidencias (textos, transcripciones y audios).
+`/admin` (inicio de sesión con la clave; sesión segura de 8 h) — listado, distribución MCER, reporte con evidencias (textos, transcripciones y audios).
 
 ## 4. Conexión inmediata con la hoja ELR_INTER (Google Sheets)
 

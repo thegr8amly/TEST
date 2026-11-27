@@ -1,11 +1,10 @@
 "use client";
 import Image from "next/image";
-import { bandInfo } from "@/lib/cefr";
+import { useState } from "react";
+import { bandInfo, CEFR_BANDS } from "@/lib/cefr";
 import { MODULES, SKILL_LABEL_ES, type SkillKey } from "@/lib/placement";
-import type { BaselineRecord } from "@/lib/record";
+import type { BaselineRecord, PublicRecord } from "@/lib/record";
 import { BrandLockup } from "./Brand";
-import { CefrScale } from "./CefrScale";
-import { cefrColor, ScoreRing } from "./ScoreRing";
 
 const SKILLS: { k: SkillKey; en: string }[] = [
   { k: "reading", en: "Reading" },
@@ -13,17 +12,89 @@ const SKILLS: { k: SkillKey; en: string }[] = [
   { k: "writing", en: "Writing" },
   { k: "speaking", en: "Speaking" },
 ];
-const METHOD: Record<string, string> = { "irt-eap": "Adaptativo · IRT", "ai-rubric": "Rúbrica MCER · IA", heuristic: "Automática provisional", none: "Pendiente" };
-const STATUS: Record<string, { t: string; c: string }> = {
-  scored: { t: "Calificado", c: "bg-sdg-green/10 text-sdg-green" },
-  provisional: { t: "Provisional", c: "bg-gold-100 text-[#9a6200]" },
-  pending_review: { t: "Revisión docente", c: "bg-sdg-red/10 text-sdg-red" },
+const METHOD: Record<string, string> = { "irt-eap": "Adaptativa · modelo IRT", "ai-rubric": "Rúbrica MCER · asistida por IA", heuristic: "Automática preliminar", none: "Pendiente" };
+const STATUS: Record<string, { t: string; c: string; icon: string }> = {
+  scored: { t: "Calificado", c: "text-[#2c6e22] bg-sdg-green/10", icon: "✓" },
+  provisional: { t: "Provisional", c: "text-[#7a4d00] bg-gold-100", icon: "◐" },
+  pending_review: { t: "Revisión docente", c: "text-[#9b1c26] bg-sdg-red/10", icon: "!" },
 };
+const HATCH = "repeating-linear-gradient(135deg, #132544 0 4px, #5b6b8a 4px 7px)";
 
-export function ReportView({ rec, admin = false, adminKey }: { rec: BaselineRecord; admin?: boolean; adminKey?: string }) {
+/** Position (%) of a score on the 0–100 scale. Bands are uneven (0–20, 21–30 … 71–100). */
+const pos = (v: number) => Math.max(0, Math.min(100, v));
+
+function BandAxis() {
+  return (
+    <div className="relative mt-1 h-4 text-[11px] text-slate-600" aria-hidden>
+      {CEFR_BANDS.map((b) => (
+        <span key={b.level} className="absolute -translate-x-1/2 font-semibold" style={{ left: `${(b.min + (b.level === "C2" ? 85 : b.max)) / 2}%` }}>{b.level}</span>
+      ))}
+    </div>
+  );
+}
+
+function BandTrack({ children, height = "h-3" }: { children?: React.ReactNode; height?: string }) {
+  return (
+    <div className={`relative ${height} w-full rounded-full bg-mist ring-1 ring-line`}>
+      {CEFR_BANDS.slice(0, -1).map((b) => <span key={b.level} aria-hidden className="absolute inset-y-0 w-px bg-line" style={{ left: `${b.max + 0.5}%` }} />)}
+      {children}
+    </div>
+  );
+}
+
+function SkillRow({ en, k, s }: { en: string; k: SkillKey; s: PublicRecord["skills"][SkillKey] }) {
+  const [hover, setHover] = useState(false);
+  const st = STATUS[s.status];
+  const sem = s.sem ?? 0;
+  return (
+    <div className="grid grid-cols-[110px_1fr] items-center gap-x-4 gap-y-1 py-3 sm:grid-cols-[130px_1fr_150px]">
+      <div>
+        <div className="font-display text-sm font-bold text-navy">{en}</div>
+        <div className="text-xs text-slate-600">{SKILL_LABEL_ES[k]}</div>
+      </div>
+      <div
+        className="relative rounded-full focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-royal"
+        onMouseEnter={() => setHover(true)}
+        onMouseLeave={() => setHover(false)}
+        onFocus={() => setHover(true)}
+        onBlur={() => setHover(false)}
+        {...(s.score !== null
+          ? { role: "meter", tabIndex: 0, "aria-valuemin": 0, "aria-valuemax": 100, "aria-valuenow": s.score, "aria-label": en, "aria-valuetext": `${s.score} de 100, nivel ${s.cefr}${sem ? `, margen ±${Math.round(sem)}` : ""}, ${st.t}` }
+          : { role: "img", "aria-label": `${en}: pendiente de revisión docente` })}
+      >
+        <BandTrack>
+          {s.score !== null && (
+            <>
+              <div className="absolute inset-y-0 left-0 rounded-r-[4px]" style={{ width: `${pos(s.score)}%`, background: s.status === "scored" ? "#132544" : HATCH }} />
+              {sem > 0 && (
+                <span aria-hidden className="absolute top-1/2 h-4 -translate-y-1/2 border-x-2 border-gold" style={{ left: `${pos(s.score - sem)}%`, width: `${pos(s.score + sem) - pos(s.score - sem)}%` }}>
+                  <span className="absolute inset-x-0 top-1/2 h-0.5 -translate-y-1/2 bg-gold" />
+                </span>
+              )}
+            </>
+          )}
+        </BandTrack>
+        {hover && s.score !== null && (
+          <div role="tooltip" className="pointer-events-none absolute -top-11 z-10 -translate-x-1/2 whitespace-nowrap rounded-lg bg-navy px-3 py-1.5 text-xs text-white shadow-lg" style={{ left: `${pos(s.score)}%` }}>
+            {en}: <strong>{s.score}</strong>/100 · {s.cefr}{sem ? ` · ±${Math.round(sem)}` : ""}
+          </div>
+        )}
+      </div>
+      <div className="col-start-2 flex items-center gap-2 sm:col-start-3 sm:justify-end">
+        <span className="font-display text-lg font-extrabold tabular-nums text-navy">{s.score ?? "—"}</span>
+        {s.cefr && <span className="rounded-md bg-navy px-1.5 py-0.5 font-display text-xs font-bold text-white">{s.cefr}</span>}
+        <span className={`rounded-md px-1.5 py-0.5 text-[11px] font-semibold ${st.c}`}><span aria-hidden>{st.icon} </span>{st.t}</span>
+      </div>
+    </div>
+  );
+}
+
+export function ReportView({ rec, evidence }: { rec: PublicRecord; evidence?: BaselineRecord }) {
   const band = bandInfo(rec.overall.cefr);
   const date = new Date(rec.completedAt).toLocaleDateString("es-DO", { day: "2-digit", month: "long", year: "numeric" });
   const mod = MODULES.find((m) => m.id === rec.placement.moduleId);
+  const provisional = rec.placement.reviewRequired || SKILLS.some(({ k }) => rec.skills[k].status !== "scored");
+  const qualitative = (["writing", "speaking"] as const).filter((k) => rec.skills[k].assessment);
 
   const download = () => {
     const blob = new Blob([JSON.stringify(rec, null, 2)], { type: "application/json" });
@@ -35,224 +106,233 @@ export function ReportView({ rec, admin = false, adminKey }: { rec: BaselineReco
 
   return (
     <div className="min-h-dvh bg-mist print:bg-white">
-      {/* toolbar */}
-      <div className="no-print sticky top-0 z-30 border-b border-line bg-white/80 backdrop-blur-xl">
+      <div className="no-print sticky top-0 z-30 border-b border-line bg-white">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3 sm:px-8">
           <BrandLockup />
           <div className="flex gap-2">
-            <button onClick={download} className="rounded-xl px-4 py-2 text-sm font-semibold text-navy ring-1 ring-line hover:bg-mist">JSON</button>
-            <button onClick={() => window.print()} className="rounded-xl bg-navy px-4 py-2 text-sm font-bold text-white hover:bg-navy-700">Descargar PDF</button>
+            <button onClick={download} className="min-h-10 rounded-lg border border-line px-4 text-sm font-semibold text-navy hover:border-navy/40 focus-visible:outline-2 focus-visible:outline-royal">Datos (JSON)</button>
+            <button onClick={() => window.print()} className="min-h-10 rounded-lg bg-navy px-4 text-sm font-semibold text-white hover:bg-navy-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-royal">Descargar PDF</button>
           </div>
         </div>
       </div>
 
-      <div className="mx-auto max-w-5xl px-4 py-8 sm:px-8 print:max-w-none print:p-0">
-        {/* ── CERTIFICATE HEADER ─────────────────────── */}
-        <section className="relative overflow-hidden rounded-[2rem] bg-navy text-white shadow-2xl shadow-navy/20 print:rounded-2xl">
-          <div className="grid-bg absolute inset-0" />
-          <div className="absolute -right-24 -top-24 h-80 w-80 rounded-full bg-royal/50 blur-3xl" />
-          <div className="absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-gold/15 blur-3xl" />
-          <div className="relative grid gap-8 p-8 sm:p-12 md:grid-cols-[1.2fr_1fr] md:items-center">
+      <main className="mx-auto max-w-5xl space-y-5 px-4 py-8 sm:px-8 print:max-w-none print:space-y-4 print:p-0">
+        {/* ── Header ─────────────────────────────────────── */}
+        <section className="overflow-hidden rounded-2xl border border-line bg-white">
+          <div className="flex flex-wrap items-center justify-between gap-4 bg-navy px-6 py-5 text-white sm:px-8">
+            <Image src="/brand/inter-wordmark-white.png" alt="INTER · Instituto Interamericano de Lenguas" width={900} height={240} className="h-9 w-auto" />
+            <div className="text-right text-xs text-white/80">
+              <div className="font-semibold uppercase tracking-[0.14em] text-gold">Perfil lingüístico</div>
+              INTER Placement Test · v{rec.ids?.assessmentVersion ?? rec.test.version}
+            </div>
+          </div>
+          <div className="grid gap-6 p-6 sm:p-8 md:grid-cols-[1.3fr_1fr] md:items-center">
             <div>
-              <Image src="/brand/inter-wordmark-white.png" alt="INTER" width={900} height={240} className="h-10 w-auto" />
-              <span className="mt-6 inline-block rounded-full bg-gold px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-navy-950">Reporte de ubicación · MCER</span>
-              <h1 className="mt-4 font-display text-3xl font-extrabold leading-tight sm:text-4xl">{rec.candidate.fullName}</h1>
-              <p className="mt-2 text-sm text-white/60">completó el INTER Placement Test y obtuvo el nivel:</p>
-              <div className="mt-6 flex flex-wrap gap-x-8 gap-y-2 text-xs text-white/60">
-                <span>Fecha: <strong className="text-white">{date}</strong></span>
-                {rec.candidate.organization && <span>Institución: <strong className="text-white">{rec.candidate.organization}</strong></span>}
-                {rec.candidate.studentId && <span>ID: <strong className="text-white">{rec.candidate.studentId}</strong></span>}
-                <span>Código: <strong className="font-mono text-white">{rec.id}</strong></span>
-              </div>
+              <h1 className="font-display text-2xl font-extrabold leading-tight text-navy sm:text-3xl">{rec.candidate.fullName}</h1>
+              <dl className="mt-3 grid grid-cols-2 gap-x-6 gap-y-1.5 text-sm">
+                <dt className="text-slate-600">Fecha</dt><dd className="font-medium text-navy">{date}</dd>
+                {rec.candidate.organization && <><dt className="text-slate-600">Institución</dt><dd className="font-medium text-navy">{rec.candidate.organization}</dd></>}
+                {rec.candidate.cohort && <><dt className="text-slate-600">Grupo</dt><dd className="font-medium text-navy">{rec.candidate.cohort}</dd></>}
+                {rec.candidate.studentId && <><dt className="text-slate-600">ID estudiante</dt><dd className="font-medium text-navy">{rec.candidate.studentId}</dd></>}
+                <dt className="text-slate-600">Código</dt><dd className="font-mono text-[13px] text-navy">{rec.id}</dd>
+              </dl>
             </div>
-            <div className="relative mx-auto flex aspect-square w-64 items-center justify-center">
-              <Image src="/brand/inter-emblem.png" alt="" fill sizes="256px" className="object-contain opacity-25" />
-              <div className="glass-dark relative flex h-44 w-44 flex-col items-center justify-center rounded-full ring-4 ring-gold/60">
-                <span className="font-display text-6xl font-extrabold tabular-nums">{rec.overall.score}</span>
-                <span className="text-xs text-white/50">/100</span>
-                <span className="mt-1 font-display text-xl font-extrabold text-gold">{rec.overall.cefr} <span className="text-sm font-semibold text-white">{band.es}</span></span>
+            <div className="rounded-xl border border-line bg-mist p-5">
+              <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">Nivel global MCER</div>
+              <div className="mt-1 flex items-baseline gap-3">
+                <span className="font-display text-5xl font-extrabold text-navy">{rec.overall.cefr}</span>
+                <span className="font-display text-lg font-bold text-navy">{band.es}</span>
               </div>
+              <div className="mt-1 text-sm text-slate-700">Índice <strong className="tabular-nums">{rec.overall.score}</strong>/100 · promedio de {rec.overall.skillsCounted.length} de 4 habilidades</div>
+              {provisional && <div className="mt-3 rounded-lg bg-gold-100 px-3 py-2 text-xs font-medium text-[#5c3b00]"><span aria-hidden>◐ </span>Resultado provisional: una o más habilidades requieren revisión docente.</div>}
             </div>
           </div>
-          <div className="sdg-bar h-1.5" />
-        </section>
-
-        {/* ── SKILLS ────────────────────────────────── */}
-        <section className="mt-6 rounded-3xl bg-white p-6 shadow-xl shadow-navy/5 ring-1 ring-line sm:p-10">
-          <h2 className="font-display text-xl font-extrabold text-navy">Resultados por habilidad</h2>
-          <div className="mt-8 grid grid-cols-2 gap-8 md:grid-cols-4">
-            {SKILLS.map(({ k, en }) => {
-              const s = rec.skills[k];
-              return (
-                <div key={k} className="flex flex-col items-center">
-                  <ScoreRing score={s.score} cefr={s.cefr} size={128} label={en} sub={s.cefr ? `${s.cefr} · ${bandInfo(s.cefr).es}` : SKILL_LABEL_ES[k]} />
-                  <span className={`mt-2 rounded-full px-2.5 py-0.5 text-[10px] font-bold ${STATUS[s.status].c}`}>{STATUS[s.status].t}</span>
-                  <span className="mt-1 text-[10px] text-slate-400">{METHOD[s.method]}{s.sem ? ` · ±${Math.round(s.sem)}` : ""}</span>
-                </div>
-              );
-            })}
-          </div>
-          <div className="mt-10">
-            <div className="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-400">Entendiendo los resultados</div>
-            <CefrScale active={rec.overall.cefr} />
-            <p className="mt-4 text-center text-xs text-slate-500">
-              El nivel global es el promedio de las habilidades calificadas ({rec.overall.skillsCounted.length}/4). Evaluación diagnóstica interna alineada a los descriptores del MCER; no es una certificación externa.
-            </p>
+          <div className="border-t border-line px-6 py-5 sm:px-8">
+            <div className="mb-2 text-xs font-semibold text-slate-600">Escala INTER 0–100 · bandas MCER</div>
+            <BandTrack height="h-4">
+              <span aria-hidden className="absolute top-1/2 h-6 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-gold ring-2 ring-white" style={{ left: `${pos(rec.overall.score)}%` }} />
+            </BandTrack>
+            <BandAxis />
           </div>
         </section>
 
-        {/* ── PROFILE + PLACEMENT ───────────────────── */}
-        <section className="mt-6 grid gap-6 md:grid-cols-[1fr_1fr]">
-          <div className="rounded-3xl bg-white p-6 shadow-xl shadow-navy/5 ring-1 ring-line sm:p-8">
-            <h2 className="font-display text-lg font-extrabold text-navy">Perfil de habilidades</h2>
-            <div className="relative mt-6 space-y-5">
-              {SKILLS.map(({ k, en }) => {
-                const s = rec.skills[k];
+        {/* ── Skills profile ─────────────────────────────── */}
+        <section className="rounded-2xl border border-line bg-white p-6 sm:p-8" aria-labelledby="perfil">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <h2 id="perfil" className="font-display text-lg font-extrabold text-navy">Perfil por habilidad</h2>
+            <div className="flex flex-wrap gap-4 text-xs text-slate-600" aria-label="Leyenda">
+              <span className="flex items-center gap-1.5"><span className="h-2.5 w-5 rounded-sm bg-navy" />Calificado</span>
+              <span className="flex items-center gap-1.5"><span className="h-2.5 w-5 rounded-sm" style={{ background: HATCH }} />Provisional</span>
+              <span className="flex items-center gap-1.5"><span className="h-3 w-5 border-x-2 border-gold"><span className="block h-0.5 translate-y-[5px] bg-gold" /></span>Margen de error (±1 EE)</span>
+            </div>
+          </div>
+          <div className="mt-3 divide-y divide-line">
+            {SKILLS.map(({ k, en }) => <SkillRow key={k} k={k} en={en} s={rec.skills[k]} />)}
+          </div>
+          <div className="grid grid-cols-[110px_1fr] gap-x-4 sm:grid-cols-[130px_1fr_150px]"><span /><BandAxis /></div>
+          <ul className="mt-4 grid gap-1 text-xs text-slate-600 sm:grid-cols-2">
+            {SKILLS.map(({ k, en }) => <li key={k}><strong className="text-navy">{en}:</strong> {METHOD[rec.skills[k].method]}{rec.skills[k].note ? ` — ${rec.skills[k].note}` : ""}</li>)}
+          </ul>
+        </section>
+
+        {/* ── Strengths & areas ──────────────────────────── */}
+        <section className="rounded-2xl border border-line bg-white p-6 sm:p-8 print:break-inside-avoid" aria-labelledby="fortalezas">
+          <h2 id="fortalezas" className="font-display text-lg font-extrabold text-navy">Fortalezas y áreas de mejora</h2>
+          {qualitative.length === 0 ? (
+            <p className="mt-2 text-sm text-slate-700">La retroalimentación cualitativa de Writing y Speaking estará disponible tras la revisión docente. Reading y Listening se reportan solo con puntuación y nivel.</p>
+          ) : (
+            <div className="mt-4 grid gap-6 md:grid-cols-2">
+              {qualitative.map((k) => {
+                const a = rec.skills[k].assessment!;
                 return (
                   <div key={k}>
-                    <div className="mb-1.5 flex justify-between text-sm"><span className="font-semibold text-navy">{en}</span><span className="tabular-nums text-slate-500">{s.score ?? "—"} {s.cefr && <b style={{ color: cefrColor(s.cefr) }}>{s.cefr}</b>}</span></div>
-                    <div className="relative h-3 rounded-full bg-mist ring-1 ring-line">
-                      {[20, 30, 40, 50, 60, 70].map((t) => <span key={t} className="absolute top-0 h-full w-px bg-line" style={{ left: `${t}%` }} />)}
-                      <div className="h-full rounded-full" style={{ width: `${s.score ?? 0}%`, background: cefrColor(s.cefr) }} />
+                    <h3 className="font-display text-sm font-bold uppercase tracking-wider text-royal">{k === "writing" ? "Writing" : "Speaking"}</h3>
+                    <table className="mt-2 w-full text-sm">
+                      <caption className="sr-only">Criterios de {k}</caption>
+                      <tbody>
+                        {a.criteria.map((c) => (
+                          <tr key={c.name} className="border-b border-line last:border-0">
+                            <th scope="row" className="py-2 pr-2 text-left align-top font-normal"><div className="font-semibold text-navy">{c.name}</div><div className="text-xs text-slate-600">{c.comment_es}</div></th>
+                            <td className="py-2 text-right align-top"><span className="rounded-md bg-navy px-1.5 py-0.5 font-display text-xs font-bold text-white">{c.cefr}</span></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                      <div><div className="text-xs font-bold uppercase tracking-wider text-[#2c6e22]">Fortalezas</div><ul className="mt-1.5 space-y-1 text-sm text-slate-700">{a.strengths_es.map((t) => <li key={t}>· {t}</li>)}</ul></div>
+                      <div><div className="text-xs font-bold uppercase tracking-wider text-[#7a4d00]">Por desarrollar</div><ul className="mt-1.5 space-y-1 text-sm text-slate-700">{a.improvements_es.map((t) => <li key={t}>· {t}</li>)}</ul></div>
                     </div>
                   </div>
                 );
               })}
-              <div className="pointer-events-none absolute -bottom-2 top-0 w-0.5 bg-navy/60" style={{ left: `${rec.overall.score}%` }} title="Promedio" />
             </div>
-            <div className="mt-4 flex justify-between text-[10px] text-slate-400"><span>A0</span><span>A1</span><span>A2</span><span>B1</span><span>B2</span><span>C1</span><span>C2</span></div>
-          </div>
-
-          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-gold-100 to-white p-6 shadow-xl shadow-navy/5 ring-1 ring-gold/40 sm:p-8">
-            <div className="text-xs font-bold uppercase tracking-[0.2em] text-[#9a6200]">Ubicación recomendada</div>
-            <div className="mt-3 font-display text-3xl font-extrabold text-navy">{rec.placement.moduleName}</div>
-            <div className="mt-1 text-sm text-slate-600">Programa {rec.placement.program} · Meta MCER {rec.placement.cefrTarget}</div>
-            {mod && <p className="mt-4 text-sm text-slate-600">{mod.description}</p>}
-            <div className="mt-5 flex flex-wrap gap-1.5">
-              {MODULES.map((m) => <span key={m.id} className={`rounded-lg px-2 py-1 text-[10px] font-semibold ${m.id === rec.placement.moduleId ? "bg-navy text-gold" : "bg-white text-slate-400 ring-1 ring-line"}`}>{m.name}</span>)}
-            </div>
-            {rec.placement.focusAreas.length > 0 && (
-              <p className="mt-5 text-sm text-navy"><strong>Áreas de enfoque:</strong> {rec.placement.focusAreas.map((f) => SKILL_LABEL_ES[f]).join(", ")}.</p>
-            )}
-            <p className="mt-4 text-[11px] leading-relaxed text-slate-500">Recomendación orientativa; la coordinación académica valida la asignación final.</p>
-          </div>
+          )}
         </section>
 
-        {/* ── FEEDBACK ──────────────────────────────── */}
-        {(["writing", "speaking"] as const).some((k) => rec.skills[k].assessment || rec.skills[k].note) && (
-          <section className="print-break mt-6 grid gap-6 md:grid-cols-2">
-            {(["writing", "speaking"] as const).map((k) => {
-              const s = rec.skills[k];
-              const a = s.assessment;
+        {/* ── Placement ─────────────────────────────────── */}
+        <section className="rounded-2xl border border-line bg-white p-6 sm:p-8 print:break-inside-avoid" aria-labelledby="ubicacion">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <h2 id="ubicacion" className="text-xs font-bold uppercase tracking-[0.14em] text-royal">Módulo INTER recomendado</h2>
+              <div className="mt-1 font-display text-3xl font-extrabold text-navy">{rec.placement.moduleName}</div>
+              <div className="text-sm text-slate-700">Programa {rec.placement.program} · meta MCER {rec.placement.cefrTarget}{rec.placement.provisionalModuleName ? " · nombre de módulo provisional" : ""}</div>
+            </div>
+          </div>
+          {mod && <p className="mt-3 max-w-2xl text-sm text-slate-700">{mod.description}</p>}
+          <ol className="mt-5 grid grid-cols-2 gap-1.5 sm:grid-cols-6" aria-label="Ruta de módulos INTER">
+            {MODULES.map((m) => {
+              const on = m.id === rec.placement.moduleId;
               return (
-                <div key={k} className="rounded-3xl bg-white p-6 shadow-xl shadow-navy/5 ring-1 ring-line sm:p-8">
-                  <h2 className="font-display text-lg font-extrabold text-navy">{k === "writing" ? "Writing" : "Speaking"} · retroalimentación</h2>
-                  {s.note && <p className="mt-3 rounded-2xl bg-mist p-3 text-xs text-slate-600">{s.note}</p>}
-                  {a && (
-                    <>
-                      <table className="mt-5 w-full text-sm">
-                        <tbody>
-                          {a.criteria.map((c) => (
-                            <tr key={c.name} className="border-b border-line last:border-0">
-                              <td className="py-2.5 pr-2 align-top"><div className="font-semibold text-navy">{c.name}</div><div className="text-xs text-slate-500">{c.comment_es}</div></td>
-                              <td className="py-2.5 text-right align-top"><span className="rounded-md px-2 py-0.5 font-display text-xs font-bold text-white" style={{ background: cefrColor(c.cefr) }}>{c.cefr}</span></td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                      <div className="mt-5 grid gap-4 sm:grid-cols-2">
-                        <div><div className="text-xs font-bold uppercase tracking-wider text-sdg-green">Fortalezas</div><ul className="mt-2 space-y-1.5 text-xs text-slate-600">{a.strengths_es.map((t) => <li key={t}>• {t}</li>)}</ul></div>
-                        <div><div className="text-xs font-bold uppercase tracking-wider text-sdg-orange">Por mejorar</div><ul className="mt-2 space-y-1.5 text-xs text-slate-600">{a.improvements_es.map((t) => <li key={t}>• {t}</li>)}</ul></div>
-                      </div>
-                    </>
-                  )}
-                </div>
+                <li key={m.id} aria-current={on ? "true" : undefined} className={`rounded-lg border px-2.5 py-2 text-xs ${on ? "border-navy bg-navy text-white" : "border-line text-slate-700"}`}>
+                  <div className={`font-semibold ${on ? "text-gold" : "text-navy"}`}>{m.cefrTarget}</div>
+                  {m.name}
+                </li>
               );
             })}
-          </section>
-        )}
+          </ol>
+          {rec.placement.focusAreas.length > 0 && <p className="mt-4 text-sm text-navy"><strong>Áreas de enfoque:</strong> {rec.placement.focusAreas.map((f) => SKILL_LABEL_ES[f]).join(", ")}.</p>}
+          <p className="mt-3 text-xs text-slate-600">{rec.placement.rationale} Recomendación orientativa: la coordinación académica valida la asignación final.</p>
+        </section>
 
-        {/* ── ELR BASELINE ─────────────────────────── */}
-        <section className="mt-6 rounded-3xl bg-white p-6 shadow-xl shadow-navy/5 ring-1 ring-line sm:p-8">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h2 className="font-display text-lg font-extrabold text-navy">Línea base · Executive Learning Report</h2>
-              <p className="text-xs text-slate-500">Medición T0 — punto de partida de la curva de aprendizaje en el Campus Virtual.</p>
-            </div>
-            <span className={`rounded-full px-3 py-1 text-xs font-bold ${rec.placement.reviewRequired ? "bg-gold-100 text-[#9a6200]" : "bg-sdg-green/10 text-sdg-green"}`}>{rec.placement.reviewRequired ? "Monitoring" : "On Track"}</span>
-          </div>
-          <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-5">
-            <Stat l="Baseline MCER" v={rec.elr.baselineCefr} />
-            {SKILLS.map(({ k, en }) => <Stat key={k} l={`${en} T0`} v={rec.elr.skills[k] ?? "—"} />)}
+        {/* ── ELR baseline (table view of the chart data) ── */}
+        <section className="rounded-2xl border border-line bg-white p-6 sm:p-8 print:break-inside-avoid" aria-labelledby="t0">
+          <h2 id="t0" className="font-display text-lg font-extrabold text-navy">Línea base T0 · Executive Learning Report</h2>
+          <p className="mt-1 text-sm text-slate-600">Punto de partida de la curva de aprendizaje en INTERclassrooms. Las mediciones posteriores (T1, T2…) se comparan con estos valores.</p>
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full min-w-[480px] text-sm">
+              <thead><tr className="border-b border-line text-left text-xs uppercase tracking-wider text-slate-600"><th scope="col" className="py-2 font-semibold">Habilidad</th><th scope="col" className="py-2 font-semibold">T0 (0–100)</th><th scope="col" className="py-2 font-semibold">MCER</th><th scope="col" className="py-2 font-semibold">Estado</th></tr></thead>
+              <tbody>
+                {SKILLS.map(({ k, en }) => (
+                  <tr key={k} className="border-b border-line">
+                    <th scope="row" className="py-2 text-left font-semibold text-navy">{en}</th>
+                    <td className="py-2 tabular-nums text-slate-800">{rec.elr.skills[k] ?? "—"}{rec.skills[k].sem ? <span className="text-slate-600"> ±{Math.round(rec.skills[k].sem!)}</span> : null}</td>
+                    <td className="py-2 text-slate-800">{rec.skills[k].cefr ?? "—"}</td>
+                    <td className="py-2 text-slate-800">{STATUS[rec.skills[k].status].t}</td>
+                  </tr>
+                ))}
+                <tr><th scope="row" className="py-2 text-left font-bold text-navy">Global</th><td className="py-2 font-bold tabular-nums text-navy">{rec.overall.score}</td><td className="py-2 font-bold text-navy">{rec.elr.baselineCefr}</td><td className="py-2 text-slate-800">{provisional ? "Provisional" : "Calificado"}</td></tr>
+              </tbody>
+            </table>
           </div>
           {rec.elr.alerts.length > 0 && (
-            <ul className="mt-5 space-y-2">
+            <ul className="mt-4 space-y-2">
               {rec.elr.alerts.map((a, i) => (
-                <li key={i} className={`flex gap-3 rounded-2xl px-4 py-3 text-sm ${a.severity === "critical" ? "bg-sdg-red/10 text-sdg-red" : a.severity === "warning" ? "bg-gold-100 text-[#7a4d00]" : "bg-mist text-slate-600"}`}>
-                  <span className="font-mono text-[10px] font-bold uppercase opacity-70">{a.code}</span>{a.message}
+                <li key={i} className={`rounded-lg border px-3 py-2 text-sm ${a.severity === "critical" ? "border-sdg-red/40 bg-sdg-red/5 text-[#9b1c26]" : a.severity === "warning" ? "border-gold/60 bg-gold-100 text-[#5c3b00]" : "border-line bg-mist text-slate-700"}`}>
+                  <span aria-hidden>{a.severity === "critical" ? "! " : a.severity === "warning" ? "▲ " : "i "}</span>{a.message}
                 </li>
               ))}
             </ul>
           )}
-          <p className="mt-4 text-xs text-slate-400">{rec.placement.rationale}</p>
         </section>
 
-        {admin && <AdminDetail rec={rec} adminKey={adminKey} />}
+        <section className="rounded-2xl border border-line bg-white p-6 text-xs leading-relaxed text-slate-600 sm:p-8">
+          <h2 className="font-display text-sm font-bold text-navy">Nota metodológica</h2>
+          <p className="mt-2">Reading y Listening se califican con un modelo de respuesta al ítem (IRT) sobre un recorrido adaptativo; el margen indicado es ±1 error estándar. Writing y Speaking se califican con una rúbrica alineada a los descriptores del MCER y quedan sujetos a revisión docente cuando se marcan como provisionales. Esta es una evaluación diagnóstica interna de INTER, alineada conceptualmente al MCER; no es una certificación oficial ni ha sido sometida aún a una validación psicométrica formal.</p>
+        </section>
 
-        <footer className="mt-10 flex flex-col items-center gap-2 pb-10 text-center text-xs text-slate-400">
-          <Image src="/brand/inter-emblem.png" alt="" width={36} height={36} />
-          Instituto Interamericano de Lenguas · INTER Placement Test v{rec.test.version}
-          {!rec.persisted && <span className="no-print text-sdg-orange">Este reporte solo está guardado en este navegador. Descárgalo en PDF o JSON.</span>}
+        {evidence && <AdminEvidence rec={evidence} />}
+
+        <footer className="flex flex-col items-center gap-2 pb-6 text-center text-xs text-slate-600">
+          <Image src="/brand/inter-emblem.png" alt="" width={32} height={32} />
+          Instituto Interamericano de Lenguas · INTER Placement Test v{rec.ids?.assessmentVersion ?? rec.test.version}
+          {!rec.persisted && <span className="no-print text-[#9b1c26]">Este reporte solo está guardado en este navegador. Descárgalo en PDF.</span>}
         </footer>
-      </div>
+      </main>
     </div>
   );
 }
 
 function Stat({ l, v }: { l: string; v: string | number }) {
   return (
-    <div className="rounded-2xl bg-mist px-4 py-3 ring-1 ring-line">
-      <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{l}</div>
-      <div className="font-display text-2xl font-extrabold text-navy tabular-nums">{v}</div>
+    <div className="rounded-lg border border-line bg-mist px-3 py-2">
+      <div className="text-[11px] font-semibold text-slate-600">{l}</div>
+      <div className="font-display text-lg font-extrabold tabular-nums text-navy">{v}</div>
     </div>
   );
 }
 
-function AdminDetail({ rec, adminKey }: { rec: BaselineRecord; adminKey?: string }) {
+function AdminEvidence({ rec }: { rec: BaselineRecord }) {
+  const ig = rec.integrity;
   return (
-    <section className="print-break mt-6 space-y-6 rounded-3xl bg-white p-6 ring-1 ring-line sm:p-8">
-      <h2 className="font-display text-lg font-extrabold text-navy">Evidencias (solo administración)</h2>
-      <div className="grid grid-cols-2 gap-3 text-xs text-slate-600 sm:grid-cols-5">
-        <Stat l="Duración" v={`${Math.round(rec.durationSec / 60)} min`} />
-        <Stat l="Cambios de pestaña" v={rec.integrity.tabSwitches} />
-        <Stat l="Salidas de ventana" v={rec.integrity.focusLosses ?? 0} />
-        <Stat l="Salidas pantalla compl." v={rec.integrity.fullscreenExits ?? 0} />
-        <Stat l="Capturas bloqueadas" v={rec.integrity.screenshotAttempts ?? 0} />
-        <Stat l="Copiar bloqueado" v={rec.integrity.copyAttempts ?? 0} />
-        <Stat l="Pegar bloqueado" v={rec.integrity.pasteAttempts} />
-        <Stat l="Imprimir" v={rec.integrity.printAttempts ?? 0} />
-        <Stat l="DevTools" v={rec.integrity.devtoolsAttempts ?? 0} />
-        <Stat l="ASR navegador" v={rec.integrity.speechRecognition ? "Sí" : "No"} />
-      </div>
+    <section className="no-print space-y-6 rounded-2xl border-2 border-dashed border-royal/40 bg-white p-6 sm:p-8" aria-labelledby="evid">
       <div>
-        <h3 className="font-display font-bold text-navy">Reading / Listening</h3>
-        <p className="mt-1 text-xs text-slate-500">Ruta Reading: {rec.responses.readingRoute.join(" → ")} · {rec.skills.reading.correct}/{rec.skills.reading.total} correctas</p>
-        <p className="text-xs text-slate-500">Ruta Listening: {rec.responses.listeningRoute.join(" → ")} · {rec.skills.listening.correct}/{rec.skills.listening.total} correctas</p>
+        <h2 id="evid" className="font-display text-lg font-extrabold text-navy">Evidencias · solo administración</h2>
+        <p className="text-xs text-slate-600">Visible únicamente con sesión de administrador. No se incluye en el reporte del candidato.</p>
+      </div>
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+        <Stat l="Duración" v={`${Math.round(rec.durationSec / 60)} min`} />
+        <Stat l="Cambios de pestaña" v={ig.tabSwitches} />
+        <Stat l="Salidas de ventana" v={ig.focusLosses ?? 0} />
+        <Stat l="Salidas pantalla compl." v={ig.fullscreenExits ?? 0} />
+        <Stat l="Capturas bloqueadas" v={ig.screenshotAttempts ?? 0} />
+        <Stat l="Copiar bloqueado" v={ig.copyAttempts ?? 0} />
+        <Stat l="Pegar bloqueado" v={ig.pasteAttempts} />
+        <Stat l="Imprimir / DevTools" v={(ig.printAttempts ?? 0) + (ig.devtoolsAttempts ?? 0)} />
+        <Stat l="Reanudaciones" v={ig.sessionResumes ?? 0} />
+        <Stat l="ASR navegador" v={ig.speechRecognition ? "Sí" : "No"} />
+      </div>
+      {rec.ids && (
+        <dl className="grid gap-x-6 gap-y-1 text-xs sm:grid-cols-2">
+          {Object.entries({ ...rec.ids, ...(rec.scoring ?? {}), period: rec.period }).map(([k, v]) => v ? <div key={k} className="flex gap-2"><dt className="w-36 text-slate-600">{k}</dt><dd className="font-mono text-navy">{String(v)}</dd></div> : null)}
+        </dl>
+      )}
+      <div className="text-sm text-slate-700">
+        <p>Ruta Reading: {rec.responses.readingRoute.join(" → ") || "—"} · {rec.skills.reading.correct}/{rec.skills.reading.total} correctas</p>
+        <p>Ruta Listening: {rec.responses.listeningRoute.join(" → ") || "—"} · {rec.skills.listening.correct}/{rec.skills.listening.total} correctas</p>
       </div>
       {rec.responses.writing.map((w) => (
         <div key={w.taskId}>
-          <h3 className="font-display font-bold text-navy">Writing {w.taskId} · {w.words} palabras</h3>
-          <p className="mt-2 whitespace-pre-wrap rounded-2xl bg-mist p-4 text-sm text-slate-700">{w.text || "(vacío)"}</p>
+          <h3 className="font-display text-sm font-bold text-navy">Writing {w.taskId} · {w.words} palabras</h3>
+          <p className="mt-2 whitespace-pre-wrap rounded-lg bg-mist p-4 text-sm text-slate-800">{w.text || "(vacío)"}</p>
         </div>
       ))}
       {rec.responses.speaking.map((s) => (
         <div key={s.taskId}>
-          <h3 className="font-display font-bold text-navy">Speaking {s.taskId} · {s.durationSec}s · ASR {s.asrConfidence?.toFixed(2) ?? "n/d"}</h3>
-          {s.audioPath && adminKey && <audio controls preload="none" className="mt-2 w-full" src={`/api/admin/audio?key=${encodeURIComponent(adminKey)}&path=${encodeURIComponent(s.audioPath)}`} />}
-          <p className="mt-2 rounded-2xl bg-mist p-4 text-sm italic text-slate-700">{s.transcript || "(sin transcripción)"}</p>
+          <h3 className="font-display text-sm font-bold text-navy">Speaking {s.taskId} · {s.durationSec}s · ASR {s.asrConfidence?.toFixed(2) ?? "n/d"}</h3>
+          {s.audioPath && <audio controls preload="none" className="mt-2 w-full" src={`/api/admin/audio?path=${encodeURIComponent(s.audioPath)}`} />}
+          <p className="mt-2 rounded-lg bg-mist p-4 text-sm italic text-slate-800">{s.transcript || "(sin transcripción)"}</p>
         </div>
       ))}
-      {(["writing", "speaking"] as const).map((k) => rec.skills[k].model && <p key={k} className="text-[10px] text-slate-400">{k}: {rec.skills[k].method} · {rec.skills[k].model}</p>)}
     </section>
   );
 }

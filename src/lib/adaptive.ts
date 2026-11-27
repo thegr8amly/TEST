@@ -71,7 +71,17 @@ function route(skill: ObjectiveSkill, items: ItemResult[]) {
   return { seen, levelIdx };
 }
 
-function pickTestlet(skill: ObjectiveSkill, levelIdx: number, used: string[]) {
+/** FNV-1a → [0,1). Seeded tie-break so a reload cannot re-draw a different testlet. */
+function seeded(seed: string) {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < seed.length; i++) {
+    h ^= seed.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return (h >>> 0) / 4294967296;
+}
+
+function pickTestlet(skill: ObjectiveSkill, levelIdx: number, used: string[], seed?: string) {
   const pool = BANK[skill].filter((t) => !used.includes(t.id));
   // nearest level first, prefer exact, then one up/down alternately
   const order = [0, 1, -1, 2, -2, 3, -3, 4, -4, 5, -5];
@@ -79,16 +89,17 @@ function pickTestlet(skill: ObjectiveSkill, levelIdx: number, used: string[]) {
     const lvl = LEVEL_ORDER[levelIdx + d];
     if (!lvl) continue;
     const c = pool.filter((t) => t.level === lvl);
-    if (c.length) return c[Math.floor(Math.random() * c.length)];
+    // Same routing rule as v1.0; only the choice among equivalent testlets is now reproducible per attempt.
+    if (c.length) return c[Math.floor((seed ? seeded(`${seed}:${skill}:${used.length}`) : Math.random()) * c.length)];
   }
   return undefined;
 }
 
-export function nextStep(skill: ObjectiveSkill, answers: AnswerIn[]): { done: false; testlet: PublicTestlet; index: number; total: number } | { done: true; result: ObjectiveSectionResult } {
+export function nextStep(skill: ObjectiveSkill, answers: AnswerIn[], seed?: string): { done: false; testlet: PublicTestlet; index: number; total: number } | { done: true; result: ObjectiveSectionResult } {
   const items = gradeAnswers(answers).filter((i) => getTestlet(i.testletId)?.skill === skill);
   const { seen, levelIdx } = route(skill, items);
   if (seen.length < TESTLETS_PER_SECTION) {
-    const t = pickTestlet(skill, levelIdx, seen);
+    const t = pickTestlet(skill, levelIdx, seen, seed);
     if (t) return { done: false, testlet: toPublic(t), index: seen.length, total: TESTLETS_PER_SECTION };
   }
   return { done: true, result: scoreSection(skill, items, seen) };

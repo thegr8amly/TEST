@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { SPEAKING_TASKS } from "@/lib/bank/productive";
 import { startRecognizer, type LiveRecognizer } from "./speech";
-import { Card, fmt, PrimaryButton, type SpeakingRec } from "./shared";
+import { Card, fetchJSON, fmt, PrimaryButton, type SpeakingRec } from "./shared";
 
 type Phase = "ready" | "prep" | "record" | "saving";
 
@@ -88,6 +88,7 @@ export function SpeakingSection({ attemptId, done, onTask, onDone }: { attemptId
       recRef.current = mr;
     } catch { recRef.current = null; }
     asrRef.current = startRecognizer();
+    // eslint-disable-next-line react-hooks/purity -- runs in an event/timer callback, not during render
     startedAt.current = Date.now();
     setPhase("record");
     // waveform
@@ -123,18 +124,20 @@ export function SpeakingSection({ attemptId, done, onTask, onDone }: { attemptId
     });
     const asr = asrRef.current ? await asrRef.current.stop() : { transcript: "", confidence: null };
     let audioPath: string | undefined;
+    let audioUploaded = false;
     if (blob && blob.size > 0) {
       try {
         const fd = new FormData();
         fd.append("file", blob, `${task.id}.webm`);
         fd.append("attemptId", attemptId);
         fd.append("taskId", task.id);
-        const r = await fetch("/api/audio", { method: "POST", body: fd });
-        const j = await r.json().catch(() => ({}));
-        if (j?.path) audioPath = j.path;
-      } catch { /* audio upload is best-effort */ }
+        // retried with back-off: unstable connections must not lose the recording
+        const j = await fetchJSON<{ stored?: boolean; path?: string }>("/api/audio", { method: "POST", body: fd }, { retries: 3 });
+        audioUploaded = !!j.stored;
+        if (j.path) audioPath = j.path;
+      } catch { /* the transcript is still submitted; the result flags missing audio */ }
     }
-    onTask({ taskId: task.id, transcript: asr.transcript, durationSec, asrConfidence: asr.confidence, audioPath });
+    onTask({ taskId: task.id, transcript: asr.transcript, durationSec, asrConfidence: asr.confidence, audioPath, audioUploaded });
     setPhase("ready");
     setLevel(Array(32).fill(0.05));
   };
@@ -146,31 +149,31 @@ export function SpeakingSection({ attemptId, done, onTask, onDone }: { attemptId
     <div className="mx-auto max-w-4xl">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <div className="font-display text-xs font-bold uppercase tracking-[0.2em] text-royal">Speaking</div>
+          <p className="font-display text-xs font-bold uppercase tracking-[0.16em] text-royal">Speaking</p>
           <div className="mt-1 flex items-center gap-2">
             {SPEAKING_TASKS.map((t, i) => <span key={t.id} className={`h-1.5 rounded-full ${i < done.length ? "w-8 bg-navy" : i === idx ? "w-12 bg-gold" : "w-8 bg-line"}`} />)}
-            <span className="ml-2 text-xs text-slate-500">Tarea {idx + 1} de {SPEAKING_TASKS.length}</span>
+            <span className="ml-2 text-sm text-slate-600">Tarea {idx + 1} de {SPEAKING_TASKS.length}</span>
           </div>
         </div>
       </div>
 
-      <Card key={task.id} className="animate-rise">
+      <Card key={task.id}>
         <div className="flex items-center justify-between">
-          <span className="rounded-full bg-gold-100 px-3 py-1 text-xs font-bold text-navy">{task.title}</span>
-          <span className="text-xs text-slate-400">Preparación {task.prepSeconds}s · Respuesta hasta {task.speakSeconds}s</span>
+          <span className="rounded-md bg-mist px-2.5 py-1 text-xs font-bold text-navy ring-1 ring-line">{task.title}</span>
+          <span className="text-sm text-slate-600">Preparación {task.prepSeconds}s · Respuesta hasta {task.speakSeconds}s</span>
         </div>
         <p className="mt-5 font-display text-xl font-bold leading-snug text-navy sm:text-2xl">{task.prompt}</p>
         {task.bullets && (
           <ul className="mt-4 grid gap-2 sm:grid-cols-3">
-            {task.bullets.map((b) => <li key={b} className="rounded-2xl bg-mist px-4 py-3 text-sm text-slate-600 ring-1 ring-line">{b}</li>)}
+            {task.bullets.map((b) => <li key={b} className="rounded-xl bg-mist px-4 py-3 text-sm text-slate-700 ring-1 ring-line">{b}</li>)}
           </ul>
         )}
 
-        <div className="mt-8 rounded-3xl bg-navy p-6 text-white sm:p-8">
+        <div className="mt-6 rounded-2xl bg-navy p-6 text-white sm:p-8">
           {phase === "ready" && (
             <div className="flex flex-col items-center gap-4 text-center">
               <p className="max-w-md text-sm text-white/70">Al pulsar el botón tendrás {task.prepSeconds} segundos para pensar. Luego sonará un tono y comenzará la grabación automáticamente.</p>
-              <button onClick={startPrep} className="rounded-2xl bg-gold px-7 py-3.5 font-display font-bold text-navy-950 shadow-xl shadow-gold/20 transition hover:bg-gold-300">Empezar preparación</button>
+              <button onClick={startPrep} className="min-h-11 rounded-xl bg-gold px-6 py-3 font-display font-bold text-navy-950 transition-colors hover:bg-gold-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">Empezar preparación</button>
               {micError && <p className="text-sm text-gold">{micError}</p>}
             </div>
           )}
