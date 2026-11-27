@@ -116,20 +116,20 @@ export function ExamGuard({ active, who, attemptId, onEvent, children }: { activ
       {/* shield when focus is lost / screenshot shortcut */}
       {shield && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-navy/80 backdrop-blur-xl">
-          <div className="animate-pop max-w-sm rounded-3xl bg-white p-8 text-center shadow-2xl">
+          <div role="dialog" aria-modal="true" aria-labelledby="shield-t" className="max-w-sm rounded-2xl bg-white p-8 text-center shadow-lg">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-navy text-gold">
               <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
             </div>
-            <h3 className="mt-4 font-display text-lg font-extrabold text-navy">{shield === "shot" ? "Captura bloqueada" : "Contenido protegido"}</h3>
-            <p className="mt-1 text-sm text-slate-500">{shield === "shot" ? "Las capturas de pantalla no están permitidas y quedan registradas en tu reporte." : "Las preguntas se ocultan cuando sales de la ventana del examen. Haz clic aquí para continuar."}</p>
-            <button onClick={() => setShield(null)} className="mt-5 rounded-xl bg-navy px-5 py-2.5 text-sm font-bold text-white">Volver al examen</button>
+            <h3 id="shield-t" className="mt-4 font-display text-lg font-extrabold text-navy">{shield === "shot" ? "Captura bloqueada" : "Contenido protegido"}</h3>
+            <p className="mt-1 text-sm text-slate-600">{shield === "shot" ? "Las capturas de pantalla no están permitidas y quedan registradas en tu reporte." : "Las preguntas se ocultan cuando sales de la ventana del examen. Haz clic aquí para continuar."}</p>
+            <button autoFocus onClick={() => setShield(null)} className="mt-5 min-h-11 rounded-xl bg-navy px-5 py-2.5 text-sm font-bold text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-royal">Volver al examen</button>
           </div>
         </div>
       )}
 
       {/* full-screen nudge */}
       {fsOut && !shield && (
-        <div className="fixed bottom-4 left-1/2 z-40 flex -translate-x-1/2 animate-rise items-center gap-3 rounded-2xl bg-navy px-4 py-3 text-sm text-white shadow-2xl ring-1 ring-white/10">
+        <div role="status" className="fixed bottom-4 left-1/2 z-40 flex -translate-x-1/2 items-center gap-3 rounded-xl bg-navy px-4 py-3 text-sm text-white shadow-lg">
           <svg className="h-5 w-5 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path d="M4 8V4h4M20 8V4h-4M4 16v4h4M20 16v4h-4" /></svg>
           El examen debe hacerse en pantalla completa.
           <button onClick={enterFullscreen} className="rounded-lg bg-gold px-3 py-1.5 font-bold text-navy-950">Activar</button>
@@ -137,8 +137,8 @@ export function ExamGuard({ active, who, attemptId, onEvent, children }: { activ
       )}
 
       {toast && (
-        <div className="fixed left-1/2 top-24 z-50 animate-toast rounded-2xl bg-sdg-red px-5 py-3 text-sm font-semibold text-white shadow-2xl">
-          <span className="inline-block animate-shake">⛔</span> {toast}
+        <div role="status" aria-live="polite" className="fixed left-1/2 top-20 z-50 -translate-x-1/2 rounded-xl bg-navy px-5 py-3 text-sm font-semibold text-white shadow-lg motion-safe:animate-toast">
+          {toast}
         </div>
       )}
 

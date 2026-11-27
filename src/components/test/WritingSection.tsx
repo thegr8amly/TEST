@@ -1,39 +1,45 @@
 "use client";
 import { useState } from "react";
 import { WRITING_TASKS } from "@/lib/bank/productive";
-import { Card, PrimaryButton, useCountdown } from "./shared";
+import { Button, Card, useCountdown } from "./shared";
 
 const count = (t: string) => (t.match(/\S+/g) ?? []).length;
 
-export function WritingSection({ values, deadline, totalMs, onChange, onPaste, onDone }: {
+export function WritingSection({ values, deadline, onChange, onPaste, onDone }: {
   values: Record<string, string>;
   deadline: number;
-  totalMs: number;
   onChange: (taskId: string, text: string) => void;
   onPaste: () => void;
-  onDone: () => void;
+  onDone: (timedOut: boolean) => void;
 }) {
   const [tab, setTab] = useState(0);
   const [confirm, setConfirm] = useState(false);
-  const left = useCountdown(deadline, onDone);
+  useCountdown(deadline, () => onDone(true));
   const task = WRITING_TASKS[tab];
   const text = values[task.id] ?? "";
   const words = count(text);
-  const pct = Math.min(1, words / task.maxWords);
-  const ok = words >= task.minWords && words <= task.maxWords + 40;
+  const inRange = words >= task.minWords && words <= task.maxWords;
 
   return (
     <div className="mx-auto max-w-6xl">
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+      <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <div className="font-display text-xs font-bold uppercase tracking-[0.2em] text-royal">Writing</div>
-          <div className="mt-2 inline-flex rounded-2xl bg-white p-1 ring-1 ring-line">
+          <p className="font-display text-xs font-bold uppercase tracking-[0.16em] text-royal">Writing</p>
+          <div role="tablist" aria-label="Tareas de escritura" className="mt-2 inline-flex rounded-xl border border-line bg-white p-1">
             {WRITING_TASKS.map((t, i) => {
               const w = count(values[t.id] ?? "");
               return (
-                <button key={t.id} onClick={() => setTab(i)} className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition ${tab === i ? "bg-navy text-white" : "text-slate-500 hover:text-navy"}`}>
+                <button
+                  key={t.id}
+                  role="tab"
+                  id={`tab-${t.id}`}
+                  aria-selected={tab === i}
+                  aria-controls={`panel-${t.id}`}
+                  onClick={() => setTab(i)}
+                  className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-royal ${tab === i ? "bg-navy text-white" : "text-slate-700 hover:text-navy"}`}
+                >
                   Tarea {i + 1} · {t.title}
-                  <span className={`rounded-md px-1.5 text-[11px] tabular-nums ${tab === i ? "bg-white/15" : "bg-mist"}`}>{w}</span>
+                  <span className={`rounded px-1.5 text-xs tabular-nums ${tab === i ? "bg-white/15" : "bg-mist"}`}>{w}</span>
                 </button>
               );
             })}
@@ -41,27 +47,26 @@ export function WritingSection({ values, deadline, totalMs, onChange, onPaste, o
         </div>
       </div>
 
-      <div key={task.id} className="grid animate-rise gap-6 lg:grid-cols-[0.8fr_1.2fr]">
+      <div key={task.id} id={`panel-${task.id}`} role="tabpanel" aria-labelledby={`tab-${task.id}`} className="grid gap-5 lg:grid-cols-[0.8fr_1.2fr]">
         <Card className="lg:self-start">
-          <div className="flex items-center justify-between">
-            <span className="rounded-full bg-gold-100 px-3 py-1 text-xs font-bold text-navy">{task.title}</span>
-            <span className="text-xs text-slate-400">{task.minWords}–{task.maxWords} palabras</span>
+          <div className="flex items-center justify-between gap-3">
+            <span className="rounded-md bg-mist px-2.5 py-1 text-xs font-bold text-navy ring-1 ring-line">{task.title}</span>
+            <span className="text-sm text-slate-600">{task.minWords}–{task.maxWords} palabras</span>
           </div>
-          <p className="mt-5 text-[15.5px] font-medium leading-7 text-navy">{task.prompt}</p>
+          <p id={`prompt-${task.id}`} className="mt-5 text-[16px] font-medium leading-7 text-navy">{task.prompt}</p>
           {task.bullets && (
             <ul className="mt-4 space-y-2">
-              {task.bullets.map((b) => (
-                <li key={b} className="flex gap-2 text-sm text-slate-600"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-gold" />{b}</li>
-              ))}
+              {task.bullets.map((b) => <li key={b} className="flex gap-2.5 text-[15px] text-slate-700"><span aria-hidden className="mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full bg-royal" />{b}</li>)}
             </ul>
           )}
-          <div className="mt-6 rounded-2xl bg-mist p-4 text-xs leading-relaxed text-slate-500">
-            Se evalúa: cumplimiento de la tarea, organización, vocabulario y gramática. Escribe en inglés con tus propias palabras — pegar texto está deshabilitado.
-          </div>
+          <p className="mt-6 border-t border-line pt-4 text-sm leading-relaxed text-slate-600">Se evalúan el cumplimiento de la tarea, la organización, el vocabulario y la gramática. Escribe en inglés con tus propias palabras. Pegar texto está deshabilitado.</p>
         </Card>
 
         <Card className="!p-0 overflow-hidden">
+          <label htmlFor={`ta-${task.id}`} className="sr-only">Tu respuesta para la tarea {tab + 1}</label>
           <textarea
+            id={`ta-${task.id}`}
+            aria-describedby={`prompt-${task.id} wc-${task.id}`}
             value={text}
             onChange={(e) => onChange(task.id, e.target.value)}
             onPaste={(e) => { e.preventDefault(); onPaste(); }}
@@ -72,26 +77,28 @@ export function WritingSection({ values, deadline, totalMs, onChange, onPaste, o
             autoComplete="off"
             data-gramm="false"
             placeholder="Start writing here…"
-            className="block min-h-[420px] w-full resize-y border-0 bg-transparent p-6 text-[15.5px] leading-7 text-slate-800 outline-none placeholder:text-slate-300 sm:p-8"
+            className="block min-h-[440px] w-full resize-y border-0 bg-transparent p-6 text-[16px] leading-7 text-slate-900 outline-none placeholder:text-slate-500 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-royal/30 sm:p-8"
           />
-          <div className="flex items-center gap-4 border-t border-line bg-mist/60 px-6 py-3">
-            <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-line">
-              <div className={`h-full rounded-full transition-all ${ok ? "bg-sdg-green" : words > task.maxWords + 40 ? "bg-sdg-red" : "bg-gold"}`} style={{ width: `${pct * 100}%` }} />
+          <div className="flex items-center gap-4 border-t border-line bg-mist px-6 py-3">
+            <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-line" aria-hidden>
+              <div className="h-full rounded-full bg-navy transition-[width]" style={{ width: `${Math.min(1, words / task.maxWords) * 100}%` }} />
             </div>
-            <span className={`text-sm font-semibold tabular-nums ${ok ? "text-sdg-green" : "text-slate-500"}`}>{words} palabras</span>
+            <span id={`wc-${task.id}`} className="text-sm font-semibold tabular-nums text-slate-700">
+              {words} palabras{inRange ? "" : words < task.minWords ? ` · mínimo ${task.minWords}` : ` · máximo sugerido ${task.maxWords}`}
+            </span>
           </div>
         </Card>
       </div>
 
       <div className="mt-6 flex flex-wrap items-center justify-end gap-3">
-        {tab === 0 && <PrimaryButton className="!bg-white !text-navy ring-1 ring-line !shadow-none" onClick={() => setTab(1)}>Ir a la tarea 2</PrimaryButton>}
+        {tab === 0 && <Button variant="secondary" onClick={() => setTab(1)}>Ir a la tarea 2</Button>}
         {!confirm ? (
-          <PrimaryButton onClick={() => setConfirm(true)}>Enviar escritura</PrimaryButton>
+          <Button onClick={() => setConfirm(true)}>Enviar sección</Button>
         ) : (
-          <div className="flex items-center gap-3 rounded-2xl bg-white px-4 py-2 ring-1 ring-line">
-            <span className="text-sm text-slate-600">¿Enviar ambas tareas? No podrás editarlas.</span>
-            <button className="text-sm font-semibold text-slate-500" onClick={() => setConfirm(false)}>Cancelar</button>
-            <PrimaryButton onClick={onDone}>Sí, enviar</PrimaryButton>
+          <div className="flex flex-wrap items-center gap-3 rounded-xl border border-line bg-white px-4 py-2" role="alertdialog" aria-label="Confirmar envío">
+            <span className="text-sm text-slate-700">¿Enviar ambas tareas? No podrás editarlas después.</span>
+            <Button variant="secondary" onClick={() => setConfirm(false)}>Cancelar</Button>
+            <Button onClick={() => onDone(false)}>Sí, enviar</Button>
           </div>
         )}
       </div>

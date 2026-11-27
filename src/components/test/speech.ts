@@ -28,12 +28,15 @@ export function ttsAvailable() {
   return typeof window !== "undefined" && "speechSynthesis" in window;
 }
 
-export async function speakLines(lines: { voice: "f" | "m"; text: string }[], opts: { rate?: number; onLine?: (i: number) => void; signal?: AbortSignal } = {}) {
+/** Speaks lines in order. Resolves true if at least one utterance actually started (used for fair play counting). */
+export async function speakLines(lines: { voice: "f" | "m"; text: string }[], opts: { rate?: number; onLine?: (i: number) => void; onStart?: () => void; signal?: AbortSignal } = {}): Promise<boolean> {
+  let started = false;
   await loadVoices();
+  if (!ttsAvailable()) return false;
   const synth = window.speechSynthesis;
   synth.cancel();
   for (let i = 0; i < lines.length; i++) {
-    if (opts.signal?.aborted) return;
+    if (opts.signal?.aborted) return started;
     opts.onLine?.(i);
     await new Promise<void>((resolve) => {
       const u = new SpeechSynthesisUtterance(lines[i].text);
@@ -44,6 +47,7 @@ export async function speakLines(lines: { voice: "f" | "m"; text: string }[], op
       // if both genders resolve to the same voice, differentiate by pitch
       const other = pickVoice(lines[i].voice === "f" ? "m" : "f");
       u.pitch = v && other && v.name === other.name ? (lines[i].voice === "m" ? 0.75 : 1.15) : 1;
+      u.onstart = () => { if (!started) { started = true; opts.onStart?.(); } };
       u.onend = () => resolve();
       u.onerror = () => resolve();
       opts.signal?.addEventListener("abort", () => { synth.cancel(); resolve(); }, { once: true });
@@ -54,6 +58,7 @@ export async function speakLines(lines: { voice: "f" | "m"; text: string }[], op
     });
     await new Promise((r) => setTimeout(r, 450));
   }
+  return started;
 }
 
 // ── Speech recognition ───────────────────────────────────────
