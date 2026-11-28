@@ -27,6 +27,10 @@ Assessment version stays at **1.0.0**: no academic parameter has changed (see `d
 - Perfil lingüístico institucional: nivel global, barras sobre las fronteras reales de las bandas MCER, margen de ±1 error estándar, textura para lo provisional, tabla T0 y nota metodológica.
 - Evidencias (integridad, identificadores, respuestas, audios) visibles solo para la administración.
 
+### Vista previa al compartir el enlace
+- Tarjeta de marca 1200×630 (JPEG de 92 KB, apta para WhatsApp) con titular, habilidades y foto en duotono navy; etiquetas Open Graph y Twitter completas (`es_DO`, título, descripción, texto alternativo). Texto propio para `/test`. Se regenera con `npm run og` (`scripts/og/`).
+- Se quitó el brillo animado de los botones de inicio.
+
 ### Portada
 - Refinamiento institucional premium: se mantienen la foto, el emblema, la órbita de habilidades y la paleta. Se eliminan glassmorphism, degradados, brillos y tarjetas con datos ficticios. Se añaden indicadores de confianza veraces.
 

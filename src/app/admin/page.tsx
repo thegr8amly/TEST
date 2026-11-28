@@ -9,7 +9,7 @@ import { applyFilter, cohortOf, orgOf, periodOf, type SegmentFilter } from "@/li
 import { listResults, storageEnabled } from "@/lib/storage";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Panel · INTER Placement Test", robots: { index: false, follow: false } };
+export const metadata: Metadata = { title: "Panel", robots: { index: false, follow: false } };
 
 type SP = SegmentFilter & { error?: string };
 
